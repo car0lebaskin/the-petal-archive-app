@@ -199,7 +199,7 @@ const PetalArchiveOS = () => {
                 <section>
                   <Label>3. Earring or Ring Type</Label>
                   <div className="grid grid-cols-3 gap-2">
-                    {['Signet', 'Adjustable', 'Hoop', 'Hook', 'Stud', 'Dangle', 'Slider', 'None'].map(st => (<GridBtn key={st} label={st} active={currentItem.style === st} onClick={() => setCurrentItem({...currentItem, style: st})} />))}
+                    {['Signet', 'Adjustable', 'Hoop', 'Hook', 'Stud', 'Dangle', 'None'].map(st => (<GridBtn key={st} label={st} active={currentItem.style === st} onClick={() => setCurrentItem({...currentItem, style: st})} />))}
                   </div>
                 </section>
                 
