@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Plus, BarChart3, Settings, ChevronRight, MapPin, 
-  Calendar, Users, CheckCircle2, Package, TrendingUp, Clock, History, LogOut, ShoppingBag, Trash2, LineChart, Layers, FileText, Database, Download, RefreshCw, ChevronDown, Wallet, ExternalLink, UserCircle
+  Calendar, Users, CheckCircle2, Package, TrendingUp, Clock, History, LogOut, ShoppingBag, Trash2, LineChart, Layers, FileText, Database, Download, RefreshCw, ChevronDown, Wallet, ExternalLink
 } from 'lucide-react';
 
 const PetalArchiveOS = () => {
@@ -21,7 +21,7 @@ const PetalArchiveOS = () => {
     category: '', series: '', style: '', metal: '', chain: '', otherChain: '', shape: '', otherShape: '', base: '', otherBase: '', colourLetter: '', otherColour: '', price: ''
   });
 
-  const [customer, setCustomer] = useState({ race: 'C', age: '20-35', gender: 'F', payment: 'TnG' });
+  const [customer, setCustomer] = useState({ race: 'C', age: '20s', gender: 'F', payment: 'TnG' });
   const [showSuccess, setShowSuccess] = useState(false);
 
   // --- HELPERS ---
@@ -43,17 +43,12 @@ const PetalArchiveOS = () => {
     { category: 'Bracelets', items: [{ name: 'Standard', price: 'RM 99' }, { name: 'Alphabet / CZ', price: 'RM 109' }, { name: 'Bangle', price: 'RM 119' }] }
   ];
 
-  const monthlyRevenue = [
-    { m: 'Jan', r: 45, tag: 'CNY' }, { m: 'Feb', r: 80, tag: 'VAL' }, { m: 'Mar', r: 30 }, { m: 'May', r: 65, tag: 'MOTHERS' }, { m: 'Nov', r: 75, tag: 'XMAS' }, { m: 'Dec', r: 100, tag: 'XMAS' }
-  ];
-
   const todayRev = 1420; 
-  const totalExpenses = (Number(session.boothFee) || 0) + (Number(session.otherExpenses) || 0);
-  const netProfit = todayRev - totalExpenses;
+  const netProfit = todayRev - (Number(session.boothFee) || 0) - (Number(session.otherExpenses) || 0);
 
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-[#FDFBF7] flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-screen bg-[#FDFBF7] flex flex-col items-center justify-center p-6 text-center animate-in zoom-in">
         <div className="w-24 h-24 bg-[#1B3022] rounded-full flex items-center justify-center mb-6 shadow-2xl"><CheckCircle2 size={48} className="text-[#B5935E]" /></div>
         <h2 className="text-3xl font-serif italic text-[#1B3022]">Logged to Archive</h2>
       </div>
@@ -63,7 +58,7 @@ const PetalArchiveOS = () => {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1B3022] font-sans p-5 max-w-md mx-auto overflow-x-hidden pb-32">
       
-      {/* 0. STARTUP: RESTORED ORGANISER & OTHERS */}
+      {/* 0. STARTUP: KILLED BOOTH FEE */}
       {step === 0 && (
         <div className="pt-10 space-y-6">
           <div className="text-center">
@@ -71,8 +66,8 @@ const PetalArchiveOS = () => {
             <p className="text-[10px] uppercase tracking-[0.4em] text-[#B5935E] font-black mt-2">Sales Tracker</p>
           </div>
           <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-5">
-            <div><Label>Event Name</Label><input className="w-full p-4 bg-[#FDFBF7] rounded-2xl border-none outline-none ring-1 ring-gray-50 uppercase text-xs font-bold" placeholder="TRX BAZAAR" value={session.eventName} onChange={e => setSession({...session, eventName: toCaps(e.target.value)})} /></div>
-            <div><Label>Organiser</Label><input className="w-full p-4 bg-[#FDFBF7] rounded-2xl border-none outline-none ring-1 ring-gray-50 uppercase text-xs font-bold" placeholder="CURATE" value={session.organiser} onChange={e => setSession({...session, organiser: toCaps(e.target.value)})} /></div>
+            <div><Label>Event Name</Label><input className="w-full p-4 bg-[#FDFBF7] rounded-2xl border-none outline-none ring-1 ring-gray-50 uppercase text-xs font-bold" placeholder="E.G. 163 MALL MAY" value={session.eventName} onChange={e => setSession({...session, eventName: toCaps(e.target.value)})} /></div>
+            <div><Label>Organiser</Label><input className="w-full p-4 bg-[#FDFBF7] rounded-2xl border-none outline-none ring-1 ring-gray-50 uppercase text-xs font-bold" placeholder="E.G. CURATE" value={session.organiser} onChange={e => setSession({...session, organiser: toCaps(e.target.value)})} /></div>
             <div>
               <Label>Location</Label>
               <div className="grid grid-cols-2 gap-2">
@@ -80,21 +75,18 @@ const PetalArchiveOS = () => {
               </div>
               {session.location === 'Others' && <input className="w-full mt-2 p-3 bg-[#FDFBF7] rounded-xl outline-none ring-1 ring-gray-50 text-xs font-bold uppercase" placeholder="SPECIFY LOCATION..." value={session.otherLocation} onChange={e => setSession({...session, otherLocation: toCaps(e.target.value)})} />}
             </div>
-            <div className="grid grid-cols-2 gap-4">
-               <div><Label>Date</Label><input type="date" className="w-full p-4 bg-[#FDFBF7] rounded-2xl outline-none ring-1 ring-gray-50 text-[10px] font-bold" value={session.date} onChange={e => setSession({...session, date: e.target.value})} /></div>
-               <div><Label>Booth Fee (RM)</Label><input type="number" className="w-full p-4 bg-[#FDFBF7] rounded-2xl outline-none ring-1 ring-gray-100 text-xs font-bold" placeholder="0" value={session.boothFee} onChange={e => setSession({...session, boothFee: e.target.value})} /></div>
-            </div>
+            <div><Label>Date</Label><input type="date" className="w-full p-4 bg-[#FDFBF7] rounded-2xl outline-none ring-1 ring-gray-50 text-[10px] font-bold" value={session.date} onChange={e => setSession({...session, date: e.target.value})} /></div>
             <button onClick={() => setStep(1)} disabled={!session.location || !session.eventName} className="w-full bg-[#1B3022] text-white py-5 rounded-2xl font-bold text-lg shadow-xl shadow-green-900/20">Open Tracker</button>
           </div>
         </div>
       )}
 
-      {/* 1. INPUT VIEW: FULL BOTTLE LOGIC */}
+      {/* 1. INPUT VIEW */}
       {step > 0 && view === 'input' && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-in slide-in-from-right">
           <div className="flex justify-between items-center bg-[#1B3022] p-4 rounded-2xl shadow-lg sticky top-0 z-10 border border-white/10">
              <div className="flex items-center gap-3 text-white"><ShoppingBag size={20} className="text-[#B5935E]" /><div><p className="text-[9px] font-black uppercase text-[#B5935E]">{basket.length} Items</p><p className="text-[10px] opacity-50 uppercase tracking-tighter">{session.eventName}</p></div></div>
-             {basket.length > 0 && <button onClick={() => setStep(3)} className="bg-[#B5935E] text-[#1B3022] px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-inner active:scale-95">Checkout</button>}
+             {basket.length > 0 && <button onClick={() => setStep(3)} className="bg-[#B5935E] text-[#1B3022] px-4 py-2 rounded-xl text-[10px] font-black uppercase">Checkout</button>}
           </div>
 
           {step === 1 && (
@@ -116,13 +108,13 @@ const PetalArchiveOS = () => {
             <div className="space-y-6">
               <section><Label>Metal</Label><div className="grid grid-cols-4 gap-2">{['STU', 'STG', 'STR', 'Brass'].map(m => (<GridButton key={m} label={m} active={currentItem.metal === m} onClick={() => setCurrentItem({...currentItem, metal: m})} />))}</div></section>
               <section><Label>Shape</Label><div className="grid grid-cols-3 gap-2">{['Round', 'Oval', 'Rectangle', 'Heart', 'Octagon', 'Others'].map(sh => (<GridButton key={sh} label={sh} active={currentItem.shape === sh} onClick={() => setCurrentItem({...currentItem, shape: sh})} />))}</div>
-                {currentItem.shape === 'Others' && <input className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-[10px] font-black uppercase text-[#B5935E]" placeholder="SPECIFY SHAPE..." value={currentItem.otherShape} onChange={e => setCurrentItem({...currentItem, otherShape: toCaps(e.target.value)})} />}
+                {currentItem.shape === 'Others' && <input className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-[10px] font-black uppercase" placeholder="SPECIFY SHAPE..." value={currentItem.otherShape} onChange={e => setCurrentItem({...currentItem, otherShape: toCaps(e.target.value)})} />}
               </section>
               <section><Label>Base</Label><div className="grid grid-cols-3 gap-2">{['MOP', 'Black', 'White', 'Clear', 'Others'].map(b => (<GridButton key={b} label={b} active={currentItem.base === b} onClick={() => setCurrentItem({...currentItem, base: b})} />))}</div>
-                {currentItem.base === 'Others' && <input className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-[10px] font-black uppercase text-[#B5935E]" placeholder="SPECIFY BASE..." value={currentItem.otherBase} onChange={e => setCurrentItem({...currentItem, otherBase: toCaps(e.target.value)})} />}
+                {currentItem.base === 'Others' && <input className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-[10px] font-black uppercase" placeholder="SPECIFY BASE..." value={currentItem.otherBase} onChange={e => setCurrentItem({...currentItem, otherBase: toCaps(e.target.value)})} />}
               </section>
               <section><Label>Colour/Letter</Label><div className="grid grid-cols-3 gap-2">{['Red', 'Blue', 'Yellow', 'Purple', 'Pink', 'Clover', 'White', 'Multi', 'Others'].map(col => (<GridButton key={col} label={col} active={currentItem.colourLetter === col} onClick={() => setCurrentItem({...currentItem, colourLetter: col})} />))}</div>
-                {currentItem.colourLetter === 'Others' && <input className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-[10px] font-black uppercase text-[#B5935E]" placeholder="SPECIFY COLOUR/LETTER..." value={currentItem.otherColour} onChange={e => setCurrentItem({...currentItem, otherColour: toCaps(e.target.value)})} />}
+                {currentItem.colourLetter === 'Others' && <input className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-[10px] font-black uppercase" placeholder="SPECIFY COLOUR/LETTER..." value={currentItem.otherColour} onChange={e => setCurrentItem({...currentItem, otherColour: toCaps(e.target.value)})} />}
               </section>
               <section><Label>Price (RM)</Label><input type="number" className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none text-3xl font-serif text-[#1B3022]" placeholder="0" value={currentItem.price} onChange={e => setCurrentItem({...currentItem, price: e.target.value})} /></section>
               <div className="flex gap-4 pt-4"><button onClick={() => setStep(1)} className="flex-1 py-4 text-gray-400 font-bold uppercase text-[10px]">Back</button><button onClick={() => {setBasket([...basket, {...currentItem, id: Date.now()}]); setStep(1); setCurrentItem({category: '', series: '', style: '', metal: '', chain: '', otherChain: '', shape: '', otherShape: '', base: '', otherBase: '', colourLetter: '', otherColour: '', price: ''})}} disabled={!currentItem.price} className="flex-[2] bg-[#B5935E] text-[#1B3022] py-4 rounded-2xl font-black text-sm shadow-xl">ADD TO BASKET</button></div>
@@ -140,7 +132,7 @@ const PetalArchiveOS = () => {
                   <Label>Customer Profile</Label>
                   <div className="grid grid-cols-2 gap-3">{['F', 'M'].map(g => (<button key={g} onClick={() => setCustomer({...customer, gender: g})} className={`py-4 rounded-2xl border text-[11px] font-black ${customer.gender === g ? 'bg-[#1B3022] text-white' : 'bg-[#FDFBF7] text-gray-400'}`}>{g === 'F' ? 'FEMALE' : 'MALE'}</button>))}</div>
                   <div className="flex gap-2">{['C', 'M', 'I', 'O'].map(r => (<button key={r} onClick={() => setCustomer({...customer, race: r})} className={`flex-1 py-3 rounded-xl border text-[10px] font-black ${customer.race === r ? 'bg-[#B5935E] text-white' : 'bg-[#FDFBF7] text-gray-400'}`}>{r}</button>))}</div>
-                  <div className="flex gap-1">{['<20', '20-35', '35-50', '50+'].map(a => (<button key={a} onClick={() => setCustomer({...customer, age: a})} className={`flex-1 py-3 rounded-xl border text-[10px] font-black ${customer.age === a ? 'bg-[#B5935E] text-white' : 'bg-[#FDFBF7] text-gray-400'}`}>{a}</button>))}</div>
+                  <div className="flex gap-1">{['10s', '20s', '30s', '40s', '50s+'].map(a => (<button key={a} onClick={() => setCustomer({...customer, age: a})} className={`flex-1 py-3 rounded-xl border text-[10px] font-black ${customer.age === a ? 'bg-[#B5935E] text-white' : 'bg-[#FDFBF7] text-gray-400'}`}>{a}</button>))}</div>
               </section>
               <button onClick={() => { setShowSuccess(true); setBasket([]); setStep(1); setTimeout(() => setShowSuccess(false), 1200); }} className="w-full bg-[#1B3022] text-white py-7 rounded-3xl font-black text-xl shadow-2xl uppercase tracking-widest">LOG {basket.length} ITEMS</button>
             </div>
@@ -162,87 +154,38 @@ const PetalArchiveOS = () => {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 h-36 flex flex-col justify-between shadow-sm">
-              <p className="text-[9px] font-bold text-[#B5935E] uppercase tracking-widest">Top Items (Today)</p>
-              <div className="space-y-1">{[{n:'Necklace',c:8},{n:'Ring',c:4}].map((it,i)=>(<div key={i} className="flex justify-between text-[9px] font-black uppercase"><span>{it.n}</span><span>{it.c} pcs</span></div>))}</div>
-            </div>
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 h-36 flex flex-col justify-between shadow-sm">
-              <p className="text-[9px] font-bold text-[#B5935E] uppercase tracking-widest">Payments</p>
-              <div className="space-y-1"><StatBar label="TnG" percentage={85} /><StatBar label="Cash" percentage={15} /></div>
-            </div>
-          </div>
           <section className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm">
-             <Label>Customer Profile (Today)</Label>
+             <Label>Audience Breakdown (Today)</Label>
              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-2"><StatBar label="Female" percentage={90} /><StatBar label="Male" percentage={10} color="bg-[#1B3022]" /></div>
-                <div className="space-y-2"><StatBar label="Chinese" percentage={75} /><StatBar label="Malay" percentage={20} /></div>
+                <div className="space-y-2"><StatBar label="Female" percentage={92} /><StatBar label="Male" percentage={8} color="bg-[#1B3022]" /></div>
+                <div className="space-y-2"><StatBar label="Chinese" percentage={80} /><StatBar label="Malay" percentage={15} /></div>
              </div>
           </section>
         </div>
       )}
 
-      {/* 3. HISTORY: DEEP BI & LIFETIME PROFILE */}
+      {/* 3. HISTORY: BI INTEL & DEMOGRAPHICS */}
       {view === 'history' && step > 0 && (
-        <div className="space-y-6 pb-20 animate-in fade-in">
-          <header className="text-center py-6"><h2 className="text-3xl font-serif italic">Business BI</h2></header>
-
-          {/* Normalized Location Rankings */}
-          <section className="bg-[#1B3022] p-8 rounded-[3rem] text-white shadow-xl relative overflow-hidden">
-            <Layers className="absolute right-[-10px] top-[-10px] opacity-10" size={80} />
-            <Label><span className="text-[#B5935E]">Location ARPD</span></Label>
-            <p className="text-[9px] opacity-40 uppercase mb-4 italic tracking-widest">Normalized Performance Per Day</p>
-            <div className="space-y-5">
-              {[{loc:'163 Mall',arpd:'1.3k',p:100},{loc:'Waterfront',arpd:'1.0k',p:85},{loc:'The Campus',arpd:'0.9k',p:70}].map((l, i) => (
-                <div key={i} className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-black uppercase"><span>{l.loc}</span><span className="font-serif italic text-[#B5935E]">RM {l.arpd}</span></div>
-                  <div className="w-full h-1.5 bg-white/10 rounded-full"><div className="h-full bg-[#B5935E]" style={{ width: `${l.p}%` }} /></div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Yearly Seasonality */}
-          <section className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm">
-            <Label>Yearly Revenue Trend</Label>
-            <div className="flex items-end gap-1 h-32 pt-4">
-              {monthlyRevenue.map((d, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1 relative">
-                  {d.tag && <div className="absolute top-[-15px] text-[6px] bg-[#B5935E] text-[#1B3022] px-1 rounded font-black whitespace-nowrap">{d.tag}</div>}
-                  <div className={`w-full rounded-t-sm ${d.r > 70 ? 'bg-[#B5935E]' : 'bg-[#1B3022] opacity-80'}`} style={{ height: `${d.r}%` }} />
-                  <span className="text-[7px] font-black text-gray-300 uppercase">{d.m}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* LIFETIME CUSTOMER INTEL */}
+        <div className="space-y-6 pb-20">
+          <header className="text-center py-6"><h2 className="text-3xl font-serif italic text-[#1B3022]">Business BI</h2></header>
           <section className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm space-y-8">
             <div>
               <div className="flex justify-between items-center mb-6 border-b pb-2">
-                <Label>Lifetime Customer Profile</Label>
+                <Label>Lifetime Customer Base</Label>
                 <Users size={16} className="text-[#B5935E]" />
               </div>
               <div className="grid grid-cols-2 gap-x-8 gap-y-6">
                 <div className="space-y-4"><StatBar label="Chinese" percentage={78} /><StatBar label="Malay" percentage={15} /><StatBar label="Other" percentage={7} /></div>
-                <div className="space-y-4"><StatBar label="20-35" percentage={65} color="bg-[#1B3022]" /><StatBar label="35-50" percentage={25} color="bg-[#1B3022]" /><StatBar label="50+" percentage={10} color="bg-[#1B3022]" /></div>
-              </div>
-              <div className="mt-6 flex gap-2">
-                 <div className="flex-1 bg-[#FDFBF7] p-3 rounded-xl border border-gray-50 text-center">
-                    <p className="text-[8px] font-black text-gray-400 uppercase mb-1">Gender Focus</p>
-                    <p className="text-sm font-serif italic text-[#1B3022]">92% Female</p>
-                 </div>
+                <div className="space-y-4"><StatBar label="20s" percentage={60} color="bg-[#1B3022]" /><StatBar label="30s" percentage={30} color="bg-[#1B3022]" /><StatBar label="40s+" percentage={10} color="bg-[#1B3022]" /></div>
               </div>
             </div>
 
-            {/* SPENDING POWER ANALYSIS */}
             <div className="pt-4">
-              <Label>Demographic Spending Power</Label>
+              <Label>Spending Power by Bracket</Label>
               <div className="space-y-3">
                  {[
-                   { group: 'Age: 35-50', avg: 'RM 145/pc', label: 'HIGHEST ATV' },
-                   { group: 'Age: 20-35', avg: 'RM 105/pc', label: 'HIGHEST VOLUME' },
-                   { group: 'Race: Chinese', avg: 'RM 118/pc', label: 'LOYALTY PEAK' }
+                   { group: 'Age: 30s-40s', avg: 'RM 145/pc', label: 'PREMIUM SEGMENT' },
+                   { group: 'Age: 10s-20s', avg: 'RM 105/pc', label: 'VOLUME SEGMENT' }
                  ].map((stat, i) => (
                    <div key={i} className="flex justify-between items-center bg-[#FDFBF7] p-4 rounded-2xl border border-gray-50">
                       <div><p className="text-[10px] font-black text-[#1B3022] uppercase tracking-tighter">{stat.group}</p><p className="text-[7px] font-bold text-[#B5935E] tracking-widest">{stat.label}</p></div>
@@ -257,18 +200,11 @@ const PetalArchiveOS = () => {
 
       {/* 4. SETTINGS: COMMAND CENTER */}
       {view === 'settings' && step > 0 && (
-        <div className="space-y-6 pb-20 animate-in slide-in-from-bottom">
+        <div className="space-y-6 pb-20">
           <header className="text-center py-6"><h2 className="text-3xl font-serif italic">Command Center</h2></header>
-
           <section className="grid grid-cols-2 gap-3">
-             <button className="bg-white p-6 rounded-[2rem] border border-gray-100 flex flex-col items-center gap-2 shadow-sm active:scale-95">
-               <Database className="text-[#B5935E]" size={24} />
-               <span className="text-[9px] font-black uppercase tracking-widest">Master Sheet</span>
-             </button>
-             <button className="bg-white p-6 rounded-[2rem] border border-gray-100 flex flex-col items-center gap-2 shadow-sm active:scale-95">
-               <FileText className="text-[#B5935E]" size={24} />
-               <span className="text-[9px] font-black uppercase tracking-widest">Internal Ref</span>
-             </button>
+             <button className="bg-white p-6 rounded-[2rem] border border-gray-100 flex flex-col items-center gap-2 shadow-sm"><Database className="text-[#B5935E]" size={24} /><span className="text-[9px] font-black uppercase tracking-widest">Master Sheet</span></button>
+             <button className="bg-white p-6 rounded-[2rem] border border-gray-100 flex flex-col items-center gap-2 shadow-sm"><FileText className="text-[#B5935E]" size={24} /><span className="text-[9px] font-black uppercase tracking-widest">Internal Ref</span></button>
           </section>
 
           {/* Integrated Price Guide */}
@@ -278,7 +214,7 @@ const PetalArchiveOS = () => {
               {priceList.map((cat, idx) => (
                 <div key={idx} className="border-b border-gray-50 last:border-0">
                   <button onClick={() => setActivePriceCat(activePriceCat === idx ? null : idx)} className="w-full py-4 flex justify-between items-center"><span className="text-[11px] font-black uppercase text-[#1B3022] tracking-wider">{cat.category}</span><ChevronDown size={16} className={`text-[#B5935E] transition-transform ${activePriceCat === idx ? 'rotate-180' : ''}`} /></button>
-                  {activePriceCat === idx && (<div className="pb-4 space-y-3">{cat.items.map((it, i) => (<div key={i} className="flex justify-between items-center bg-[#FDFBF7] p-3 rounded-xl border border-gray-100"><span className="text-[10px] font-bold text-gray-500 uppercase">{it.name}</span><span className="text-xs font-serif italic text-[#1B3022]">{it.price}</span></div>))}</div>)}
+                  {activePriceCat === idx && (<div className="pb-4 space-y-3">{cat.items.map((it, i) => (<div key={i} className="flex justify-between items-center bg-[#FDFBF7] p-3 rounded-xl border border-gray-100"><span className="text-[10px] font-bold text-gray-400 uppercase">{it.name}</span><span className="text-xs font-serif italic text-[#1B3022]">{it.price}</span></div>))}</div>)}
                 </div>
               ))}
             </div>
@@ -286,10 +222,12 @@ const PetalArchiveOS = () => {
 
           {/* Expense Logger */}
           <section className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm">
-             <Label>Daily Expense Logger</Label>
+             <Label>Expense Logger</Label>
              <div className="space-y-4">
-                <div className="flex justify-between border-b pb-2 text-[10px] font-bold uppercase"><span>Booth Fee (Lump)</span><span className="font-serif italic text-[#B5935E]">RM {session.boothFee || 0}</span></div>
-                <div className="flex gap-2"><input type="number" className="flex-1 p-3 bg-[#FDFBF7] rounded-xl outline-none text-xs font-bold" placeholder="ADD MISC (RM)..." onChange={(e)=>setSession({...session, otherExpenses: session.otherExpenses + Number(e.target.value)})}/><button className="p-3 bg-[#1B3022] text-white rounded-xl"><Plus size={18}/></button></div>
+                <div className="flex gap-2">
+                   <input type="number" className="flex-1 p-3 bg-[#FDFBF7] rounded-xl outline-none text-xs font-bold" placeholder="ADD BOOTH FEE / MISC..." />
+                   <button className="p-3 bg-[#1B3022] text-white rounded-xl"><Plus size={18}/></button>
+                </div>
              </div>
           </section>
 
