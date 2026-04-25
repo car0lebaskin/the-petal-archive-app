@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Plus, BarChart3, Settings, MapPin, Calendar, CheckCircle2, 
+  Plus, BarChart3, Settings, CheckCircle2, 
   Clock, History, BookOpen, ExternalLink, ChevronDown, ChevronUp, 
-  PieChart, Activity, DollarSign, Loader2
+  Activity, DollarSign, Loader2, Wallet
 } from 'lucide-react';
 
 const PetalArchiveOS = () => {
@@ -58,18 +58,16 @@ const PetalArchiveOS = () => {
     }
   }, [view]);
 
-  // --- 4. DATA CALCULATIONS (The "Brain") ---
+  // --- 4. DATA CALCULATIONS ---
   const stats = useMemo(() => {
     const totalRevenue = liveData.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
     const totalPieces = liveData.length;
     
-    // Category Ranking
     const categories = liveData.reduce((acc, curr) => {
       acc[curr.category] = (acc[curr.category] || 0) + 1;
       return acc;
     }, {});
 
-    // Location Analysis for BI
     const locationRevenue = liveData.reduce((acc, curr) => {
       const loc = curr.location || 'Unknown';
       acc[loc] = (acc[loc] || 0) + (Number(curr.price) || 0);
@@ -120,7 +118,7 @@ const PetalArchiveOS = () => {
     setStep(1); 
   };
 
-  // --- 6. UI COMPONENTS ---
+  // --- 6. UI HELPERS ---
   const Label = ({ children }) => <label className="text-[10px] font-black text-[#B5935E] uppercase tracking-[0.2em] mb-2 block">{children}</label>;
   const GridBtn = ({ label, active, onClick }) => (
     <button onClick={onClick} className={`py-4 px-1 rounded-xl border text-[10px] font-black transition-all ${active ? 'bg-[#1B3022] text-white border-[#1B3022] shadow-md' : 'bg-white text-[#1B3022] border-gray-100 shadow-sm'}`}>{label}</button>
@@ -149,9 +147,11 @@ const PetalArchiveOS = () => {
             <header className="text-center"><h1 className="text-4xl font-serif italic">The Petal Archive</h1><p className="text-[10px] uppercase tracking-[0.4em] text-[#B5935E] font-black mt-1">Sales Tracker</p></header>
             <div className="bg-white p-7 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-4">
               <div><Label>Event Name</Label><input className="w-full p-4 bg-[#FDFBF7] rounded-xl outline-none ring-1 ring-gray-100 uppercase text-xs font-bold" placeholder="E.G. HOLIDAY HOME MARKET" value={session.eventName} onChange={e => setSession({...session, eventName: toCaps(e.target.value)})} /></div>
-              <div><Label>Location</Label><div className="grid grid-cols-2 gap-2 mb-3">{['163 Mall', 'Waterfront', 'Intermark', 'BSC', 'The Campus', 'Publika', 'Others'].map(loc => (<GridBtn key={loc} label={loc} active={session.location === loc} onClick={() => setSession({...session, location: loc})} />))}</div></div>
+              <div><Label>Organiser</Label><input className="w-full p-4 bg-[#FDFBF7] rounded-xl outline-none ring-1 ring-gray-100 uppercase text-xs font-bold" placeholder="E.G. ROTAN LOT" value={session.organiser} onChange={e => setSession({...session, organiser: toCaps(e.target.value)})} /></div>
+              <div><Label>Location</Label><div className="grid grid-cols-2 gap-2 mb-3">{['163 Mall', 'Waterfront', 'Intermark', 'BSC', 'The Campus', 'Publika', 'Others'].map(loc => (<GridBtn key={loc} label={loc} active={session.location === loc} onClick={() => setSession({...session, location: loc})} />))}</div>
+              {session.location === 'Others' && <input className="w-full p-3 bg-[#FDFBF7] rounded-xl ring-1 ring-gray-100 text-xs uppercase font-bold" placeholder="SPECIFY..." value={session.otherLocation} onChange={e => setSession({...session, otherLocation: toCaps(e.target.value)})} />}</div>
               <div><Label>Date</Label><input type="date" className="w-full p-4 bg-[#FDFBF7] rounded-xl ring-1 ring-gray-100" value={session.date} onChange={e => setSession({...session, date: e.target.value})} /></div>
-              <button onClick={startSession} className="w-full bg-[#1B3022] text-white py-5 rounded-2xl font-bold shadow-xl">Open Tracker</button>
+              <button onClick={startSession} className="w-full bg-[#1B3022] text-white py-5 rounded-2xl font-bold shadow-xl uppercase">Open Tracker</button>
             </div>
           </motion.div>
         )}
@@ -160,15 +160,16 @@ const PetalArchiveOS = () => {
         {step > 0 && view === 'input' && (
           <motion.div key="input" initial={{ x: 10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="space-y-6">
             <div className="bg-[#1B3022] p-4 rounded-2xl flex justify-between items-center shadow-lg">
-              <div className="text-white"><p className="text-[10px] font-black uppercase text-[#B5935E]">{session.location}</p><p className="text-[11px] font-serif italic">{basket.length} Items in Basket</p></div>
+              <div className="text-white"><p className="text-[10px] font-black uppercase text-[#B5935E]">{session.location}</p><p className="text-[11px] font-serif italic">{basket.length} Items</p></div>
               {basket.length > 0 && <button onClick={() => setStep(3)} className="bg-[#B5935E] text-[#1B3022] px-5 py-2 rounded-xl text-[10px] font-black uppercase">Checkout</button>}
             </div>
 
             {step === 1 && (
               <div className="space-y-7">
-                <section><Label>1. Main Item</Label><div className="grid grid-cols-4 gap-2">{['Necklace', 'Bracelet', 'Ring', 'Earring', 'Bangle', 'Charm', 'Pendant'].map(c => (<GridBtn key={c} label={c} active={currentItem.category === c} onClick={() => setCurrentItem({...currentItem, category: c})} />))}</div></section>
-                <section><Label>2. Chain Type</Label><div className="grid grid-cols-4 gap-2">{['Cable', 'Snake', 'Paperclip', 'Kiss', 'Bead', 'None'].map(ch => (<GridBtn key={ch} label={ch} active={currentItem.chain === ch} onClick={() => setCurrentItem({...currentItem, chain: ch})} />))}</div></section>
+                <section><Label>1. Main Item</Label><div className="grid grid-cols-4 gap-2">{['Necklace', 'Bracelet', 'Ring', 'Earring', 'Bangle', 'Charm', 'Pendant', 'Chain'].map(c => (<GridBtn key={c} label={c} active={currentItem.category === c} onClick={() => setCurrentItem({...currentItem, category: c})} />))}</div></section>
+                <section><Label>2. Chain Type</Label><div className="grid grid-cols-4 gap-2">{['Cable', 'Snake', 'Paperclip', 'M-Paper', 'Kiss', 'Bead', 'None', 'Others'].map(ch => (<GridBtn key={ch} label={ch} active={currentItem.chain === ch} onClick={() => setCurrentItem({...currentItem, chain: ch})} />))}</div>{currentItem.chain === 'Others' && <input className="w-full mt-3 p-4 bg-white border border-gray-100 rounded-xl text-[10px] font-black uppercase" placeholder="SPECIFY CHAIN..." onChange={e => setCurrentItem({...currentItem, otherChain: toCaps(e.target.value)})} />}</section>
                 <section><Label>3. Series</Label><div className="grid grid-cols-3 gap-2">{['Alphabet', 'Plain', 'CZ', 'Pebble', 'Locket', 'None'].map(s => (<GridBtn key={s} label={s} active={currentItem.series === s} onClick={() => setCurrentItem({...currentItem, series: s})} />))}</div></section>
+                <section><Label>4. Style</Label><div className="grid grid-cols-3 gap-2">{['Signet', 'Adjustable', 'Hoop', 'Hook', 'Stud', 'Dangle', 'Slider', 'None'].map(st => (<GridBtn key={st} label={st} active={currentItem.style === st} onClick={() => setCurrentItem({...currentItem, style: st})} />))}</div></section>
                 <button onClick={() => setStep(2)} className="w-full bg-[#1B3022] text-white py-5 rounded-2xl font-black text-sm shadow-xl uppercase">Next Details</button>
               </div>
             )}
@@ -176,6 +177,9 @@ const PetalArchiveOS = () => {
             {step === 2 && (
               <div className="space-y-6">
                 <section><Label>Metal</Label><div className="grid grid-cols-4 gap-2">{['STU', 'STG', 'STR', 'Brass'].map(m => (<GridBtn key={m} label={m} active={currentItem.metal === m} onClick={() => setCurrentItem({...currentItem, metal: m})} />))}</div></section>
+                <section><Label>Shape Selection</Label><div className="grid grid-cols-3 gap-2">{['Round', 'Oval', 'Rectangle', 'Heart', 'Octagon', 'Others'].map(sh => (<GridBtn key={sh} label={sh} active={currentItem.shape === sh} onClick={() => setCurrentItem({...currentItem, shape: sh})} />))}</div>{currentItem.shape === 'Others' && <input className="w-full mt-3 p-4 bg-white border border-gray-100 rounded-xl text-[10px] font-black uppercase" placeholder="SPECIFY SHAPE..." onChange={e => setCurrentItem({...currentItem, otherShape: toCaps(e.target.value)})} />}</section>
+                <section><Label>Base Selection</Label><div className="grid grid-cols-3 gap-2">{['MOP', 'Black', 'White', 'Clear', 'Others'].map(b => (<GridBtn key={b} label={b} active={currentItem.base === b} onClick={() => setCurrentItem({...currentItem, base: b})} />))}</div>{currentItem.base === 'Others' && <input className="w-full mt-3 p-4 bg-white border border-gray-100 rounded-xl text-[10px] font-black uppercase" placeholder="SPECIFY BASE..." onChange={e => setCurrentItem({...currentItem, otherBase: toCaps(e.target.value)})} />}</section>
+                <section><Label>Colour / Letter</Label><div className="grid grid-cols-3 gap-2">{['Red', 'Blue', 'Yellow', 'Purple', 'Pink', 'Clover', 'White', 'Multi', 'Others'].map(col => (<GridBtn key={col} label={col} active={currentItem.colourLetter === col} onClick={() => setCurrentItem({...currentItem, colourLetter: col})} />))}</div>{currentItem.colourLetter === 'Others' && <input className="w-full mt-3 p-4 bg-white border border-gray-100 rounded-xl text-[10px] font-black uppercase" placeholder="SPECIFY COLOUR/LETTER..." onChange={e => setCurrentItem({...currentItem, otherColour: toCaps(e.target.value)})} />}</section>
                 <section><Label>Price (RM)</Label><input type="number" className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none text-2xl font-serif text-[#1B3022]" value={currentItem.price} onChange={e => setCurrentItem({...currentItem, price: e.target.value})} /></section>
                 <div className="flex gap-4"><button onClick={() => setStep(1)} className="flex-1 py-4 text-gray-400 font-bold uppercase text-[10px]">Back</button><button onClick={addToBasket} className="flex-[2] bg-[#B5935E] text-[#1B3022] py-4 rounded-2xl font-black shadow-xl">ADD TO BASKET</button></div>
               </div>
@@ -188,6 +192,15 @@ const PetalArchiveOS = () => {
                   <div className="text-6xl font-serif text-[#1B3022] mb-6">RM {basket.reduce((acc, item) => acc + Number(item.price || 0), 0)}</div>
                   <div className="grid grid-cols-3 gap-2">{['Cash', 'Card', 'QR'].map(p => (<button key={p} onClick={() => setCustomer({...customer, payment: p})} className={`py-3 text-[10px] font-black rounded-xl border ${customer.payment === p ? 'bg-[#1B3022] text-white' : 'bg-gray-50'}`}>{p}</button>))}</div>
                 </div>
+                <section className="bg-white p-8 rounded-[3rem] border border-gray-100 space-y-4">
+                  <Label>Customer Profile</Label>
+                  <div className="flex gap-2">
+                    <button onClick={() => setCustomer({...customer, gender: 'F'})} className={`flex-1 py-4 rounded-2xl font-black text-[11px] ${customer.gender === 'F' ? 'bg-[#1B3022] text-white' : 'bg-gray-50'}`}>FEMALE</button>
+                    <button onClick={() => setCustomer({...customer, gender: 'M'})} className={`flex-1 py-4 rounded-2xl font-black text-[11px] ${customer.gender === 'M' ? 'bg-[#1B3022] text-white' : 'bg-gray-50'}`}>MALE</button>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">{['C', 'M', 'I', 'O'].map(r => (<button key={r} onClick={() => setCustomer({...customer, race: r})} className={`py-2 rounded-lg text-[10px] font-black ${customer.race === r ? 'bg-[#B5935E] text-white' : 'bg-gray-50'}`}>{r}</button>))}</div>
+                  <div className="grid grid-cols-5 gap-2">{['10s', '20s', '30s', '40s', '50s'].map(a => (<button key={a} onClick={() => setCustomer({...customer, age: a})} className={`py-2 rounded-lg text-[10px] font-black ${customer.age === a ? 'bg-[#B5935E] text-white' : 'bg-gray-50'}`}>{a}</button>))}</div>
+                </section>
                 <button onClick={logTransaction} className="w-full bg-[#1B3022] text-white py-7 rounded-3xl font-black text-xl shadow-2xl uppercase tracking-widest">Log Transaction</button>
               </div>
             )}
@@ -221,26 +234,23 @@ const PetalArchiveOS = () => {
                     <span>{cat}</span><span className="text-[#B5935E]">{count} SOLD</span>
                   </div>
                 ))}
-                {liveData.length === 0 && <p className="text-[10px] text-gray-300 italic">No sales recorded yet...</p>}
               </div>
             </section>
           </motion.div>
         )}
 
-        {/* BI VIEW (History & Comparisons) */}
+        {/* BI VIEW */}
         {view === 'history' && step > 0 && (
           <motion.div key="bi" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-32">
             <header className="text-center py-6"><h2 className="text-3xl font-serif italic text-[#1B3022]">Business Intelligence</h2></header>
-            
             <section className="bg-[#1B3022] p-8 rounded-[3rem] text-white shadow-xl">
-              <Label><span className="text-[#B5935E]">Current Venue Efficiency</span></Label>
+              <Label><span className="text-[#B5935E]">Venue Comparison</span></Label>
               <h4 className="text-xl font-serif italic mb-2">{session.location}</h4>
               <p className="text-[9px] opacity-40 uppercase font-black">Total RM at this location</p>
               <p className="text-3xl font-serif mt-1">RM {stats.locationRevenue[session.location]?.toLocaleString() || 0}</p>
             </section>
-
             <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
-              <Label>Location Comparison</Label>
+              <Label>Location History</Label>
               <div className="space-y-4">
                 {Object.entries(stats.locationRevenue).map(([loc, rev], i) => (
                   <div key={i} className="flex justify-between border-b border-gray-50 pb-2">
@@ -253,11 +263,10 @@ const PetalArchiveOS = () => {
           </motion.div>
         )}
 
-        {/* COMMAND CENTER (Settings) */}
+        {/* COMMAND CENTER */}
         {view === 'settings' && step > 0 && (
           <motion.div key="settings" initial={{ y: 20 }} animate={{ y: 0 }} className="space-y-6 pb-32">
             <header className="text-center py-6"><h2 className="text-3xl font-serif italic text-[#1B3022]">Command Center</h2></header>
-            
             <section className="bg-[#1B3022] p-8 rounded-[2.5rem] text-white shadow-xl">
                <div className="flex items-center gap-2 mb-4 text-[#B5935E] font-black text-[10px] uppercase tracking-widest"><Clock size={16}/> Quick Rules</div>
                <div className="space-y-3 text-[10px] font-black uppercase tracking-[0.1em]">
@@ -265,14 +274,14 @@ const PetalArchiveOS = () => {
                   <div className="flex justify-between"><span>Clover Items</span><span className="text-[#B5935E]">+ RM 14</span></div>
                </div>
             </section>
-
             <section className="bg-white p-2 rounded-[2.5rem] border border-gray-100 shadow-sm">
               <div className="p-6 flex items-center gap-2"><BookOpen size={18} className="text-[#B5935E]"/><Label>Price Directory</Label></div>
               <div className="space-y-1">
                 {[
-                  {c: "Necklaces", i: [{n: "Cable / Snake", p: "95"}, {n: "Beaded / Kiss", p: "105"}, {n: "3-Pearl / 3-Agate", p: "159"}, {n: "Full Pearl", p: "239"}]},
-                  {c: "Bracelets", i: [{n: "Snake / Box", p: "95"}, {n: "M-Paper / Twist", p: "105"}, {n: "Charm (3 Charms)", p: "169"}]},
-                  {c: "Bangles & Rings", i: [{n: "Bangle (Twist)", p: "129"}, {n: "Rings", p: "89"}]}
+                  {c: "Necklaces", i: [{n: "Cable / Snake", p: "95"}, {n: "Beaded / Kiss / Paperclip", p: "105"}, {n: "3-Pearl / 3-Agate / White C2", p: "159"}, {n: "Full Pearl", p: "239"}]},
+                  {c: "Bracelets", i: [{n: "Snake / Box", p: "95"}, {n: "M-Paper / Paperclip", p: "105"}, {n: "Charm (3 Charms)", p: "169"}]},
+                  {c: "Bangles & Rings", i: [{n: "Bangle (Twist)", p: "129"}, {n: "Rings", p: "89"}]},
+                  {c: "Add-Ons", i: [{n: "Floral Charm Alone", p: "55"}, {n: "Letter Charm Alone", p: "45"}]}
                 ].map((group, i) => (
                   <div key={i} className="px-2">
                     <button onClick={() => setOpenPriceCat(openPriceCat === i ? null : i)} className="w-full p-4 flex justify-between items-center text-[10px] font-black uppercase text-[#1B3022] bg-[#FDFBF7] rounded-xl mb-1">
@@ -281,8 +290,8 @@ const PetalArchiveOS = () => {
                     {openPriceCat === i && (
                       <div className="p-4 space-y-3 bg-white border border-gray-100 rounded-xl mb-2">
                         {group.i.map((it, j) => (
-                          <div key={j} className="flex justify-between text-[10px] border-b border-gray-50 pb-2">
-                            <span className="text-gray-400 font-bold uppercase">{it.n}</span>
+                          <div key={j} className="flex justify-between text-[10px] border-b border-gray-50 pb-2 italic">
+                            <span className="text-gray-400 font-bold uppercase not-italic tracking-tighter">{it.n}</span>
                             <span className="font-serif italic text-[#1B3022]">RM {it.p}</span>
                           </div>
                         ))}
@@ -292,13 +301,12 @@ const PetalArchiveOS = () => {
                 ))}
               </div>
             </section>
-            
-            <button onClick={endSession} className="w-full bg-red-50 text-red-400 py-6 rounded-3xl font-black text-xs uppercase shadow-sm border border-red-100">End Current Session</button>
+            <button onClick={endSession} className="w-full bg-red-50 text-red-400 py-6 rounded-3xl font-black text-xs uppercase border border-red-100">End Current Session</button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* FLOATING NAVIGATION */}
+      {/* NAVIGATION */}
       {step > 0 && (
         <nav className="fixed bottom-8 left-6 right-6 bg-[#1B3022] rounded-[2.5rem] p-2 flex justify-around items-center z-50 shadow-2xl border border-white/5 backdrop-blur-md">
           <button onClick={() => setView('input')} className={`p-4 rounded-2xl transition-all ${view === 'input' ? 'bg-[#B5935E] text-white shadow-lg' : 'text-gray-500 hover:text-gray-200'}`}><Plus size={22} /></button>
