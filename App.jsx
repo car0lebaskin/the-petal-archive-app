@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Plus, BarChart3, Settings, ChevronRight, MapPin, 
-  Calendar, Users, CheckCircle2, Package, TrendingUp, X, LogOut
+  Calendar, Users, CheckCircle2, Package, TrendingUp, Clock, History, LogOut
 } from 'lucide-react';
 
 const PetalArchiveOS = () => {
@@ -13,9 +13,9 @@ const PetalArchiveOS = () => {
   });
   
   const [sale, setSale] = useState({
-    category: '', series: '', style: '', metal: 'STG', 
+    category: '', series: '', style: '', metal: '', 
     chain: '', otherChain: '', shape: '', otherShape: '', 
-    base: 'MOP (P)', otherBase: '', colourLetter: '', otherColour: '', 
+    base: '', otherBase: '', colourLetter: '', otherColour: '', 
     price: '', payment: 'TnG',
     customer: { race: 'C', age: '20-35', gender: 'F' }
   });
@@ -28,7 +28,7 @@ const PetalArchiveOS = () => {
   // --- STYLING HELPERS ---
   const Label = ({ children }) => <label className="text-[10px] font-black text-[#B5935E] uppercase tracking-[0.2em] mb-3 block">{children}</label>;
 
-  const GridButton = ({ label, active, onClick, cols = "grid-cols-3" }) => (
+  const GridButton = ({ label, active, onClick }) => (
     <button 
       onClick={onClick}
       className={`py-3.5 px-1 rounded-xl border text-[10px] font-black transition-all duration-200
@@ -38,7 +38,6 @@ const PetalArchiveOS = () => {
     </button>
   );
 
-  // --- DASHBOARD VISUAL COMPONENTS ---
   const StatBar = ({ label, percentage, color = "bg-[#B5935E]" }) => (
     <div className="space-y-1">
       <div className="flex justify-between text-[9px] font-black uppercase text-gray-400">
@@ -58,7 +57,7 @@ const PetalArchiveOS = () => {
           <CheckCircle2 size={48} className="text-[#B5935E]" />
         </div>
         <h2 className="text-3xl font-serif italic text-[#1B3022]">Logged</h2>
-        <p className="text-[#B5935E] font-bold text-[10px] uppercase tracking-widest mt-2">Sale Archive Updated</p>
+        <p className="text-[#B5935E] font-bold text-[10px] uppercase tracking-widest mt-2 font-bold">Sales Sheet Updated</p>
       </div>
     );
   }
@@ -89,7 +88,7 @@ const PetalArchiveOS = () => {
             </div>
             <div>
               <Label>Date</Label>
-              <input type="date" className="w-full p-4 bg-[#FDFBF7] rounded-2xl outline-none ring-1 ring-gray-50" value={session.date} onChange={e => setSession({...session, date: e.target.value})} />
+              <input type="date" className="w-full p-4 bg-[#FDFBF7] rounded-2xl outline-none ring-1 ring-gray-100" value={session.date} onChange={e => setSession({...session, date: e.target.value})} />
             </div>
             <button onClick={() => setStep(1)} disabled={!session.location} className="w-full bg-[#1B3022] text-white py-5 rounded-2xl font-bold text-lg shadow-lg">Open Tracker</button>
           </div>
@@ -116,23 +115,36 @@ const PetalArchiveOS = () => {
                   ))}
                 </div>
               </section>
+
               <section>
-                <Label>2. Series</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['Alphabet', 'Plain', 'CZ', 'Pebble', 'Locket'].map(s => (
-                    <GridButton key={s} label={s} active={sale.series === s} onClick={() => setSale({...sale, series: s})} />
+                <Label>2. Chain Type</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {['Cable', 'Snake', 'Paperclip', 'M-Paper', 'Kiss', 'Bead', 'None', 'Others'].map(ch => (
+                    <GridButton key={ch} label={ch} active={sale.chain === ch} onClick={() => setSale({...sale, chain: ch})} />
                   ))}
                 </div>
+                {sale.chain === 'Others' && <input className="w-full mt-3 p-4 bg-white border border-gray-100 rounded-2xl outline-none text-[10px] font-black uppercase text-[#B5935E]" placeholder="SPECIFY CHAIN..." onChange={e => setSale({...sale, otherChain: toCaps(e.target.value)})} />}
               </section>
-              <section>
-                <Label>3. Style</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['Signet', 'Adjustable', 'Hoop', 'Hook', 'Stud', 'Dangle'].map(st => (
-                    <GridButton key={st} label={st} active={sale.style === st} onClick={() => setSale({...sale, style: st})} />
-                  ))}
-                </div>
-              </section>
-              <button onClick={() => setStep(2)} className="w-full bg-[#1B3022] text-white py-5 rounded-2xl font-black text-sm tracking-widest shadow-xl mt-4">NEXT: BUILD DETAILS</button>
+
+              <div className="grid grid-cols-2 gap-4">
+                <section>
+                  <Label>3. Series</Label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {['Alphabet', 'Plain', 'CZ', 'Pebble', 'Locket', 'None'].map(s => (
+                      <GridButton key={s} label={s} active={sale.series === s} onClick={() => setSale({...sale, series: s})} />
+                    ))}
+                  </div>
+                </section>
+                <section>
+                  <Label>4. Style</Label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {['Signet', 'Adjustable', 'Hoop', 'Hook', 'Stud', 'Dangle', 'Slider', 'None'].map(st => (
+                      <GridButton key={st} label={st} active={sale.style === st} onClick={() => setSale({...sale, style: st})} />
+                    ))}
+                  </div>
+                </section>
+              </div>
+              <button onClick={() => setStep(2)} className="w-full bg-[#1B3022] text-white py-5 rounded-2xl font-black text-sm tracking-widest shadow-xl mt-4">NEXT: MATERIALS</button>
             </div>
           )}
 
@@ -148,182 +160,10 @@ const PetalArchiveOS = () => {
               </section>
 
               <section>
-                <Label>Chain Type</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {['Cable', 'Snake', 'Paperclip', 'M-Paper', 'Kiss', 'Bead', 'None', 'Others'].map(ch => (
-                    <GridButton key={ch} label={ch} active={sale.chain === ch} onClick={() => setSale({...sale, chain: ch})} />
-                  ))}
-                </div>
-                {sale.chain === 'Others' && <input className="w-full mt-3 p-4 bg-white border border-gray-100 rounded-2xl outline-none text-[10px] font-black uppercase text-[#B5935E]" placeholder="SPECIFY CHAIN (ALL CAPS)..." onChange={e => setSale({...sale, otherChain: toCaps(e.target.value)})} />}
-              </section>
-
-              <section>
                 <Label>Shape Selection</Label>
                 <div className="grid grid-cols-3 gap-2">
                   {['Round', 'Oval', 'Rectangle', 'Heart', 'Octagon', 'Others'].map(sh => (
                     <GridButton key={sh} label={sh} active={sale.shape === sh} onClick={() => setSale({...sale, shape: sh})} />
                   ))}
                 </div>
-                {sale.shape === 'Others' && <input className="w-full mt-3 p-4 bg-white border border-gray-100 rounded-2xl outline-none text-[10px] font-black uppercase text-[#B5935E]" placeholder="SPECIFY SHAPE..." onChange={e => setSale({...sale, otherShape: toCaps(e.target.value)})} />}
-              </section>
-
-              <section>
-                <Label>Base Selection</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['MOP (P)', 'Black (B)', 'White (W)', 'Clear (C)', 'Others'].map(b => (
-                    <GridButton key={b} label={b} active={sale.base === b} onClick={() => setSale({...sale, base: b})} />
-                  ))}
-                </div>
-                {sale.base === 'Others' && <input className="w-full mt-3 p-4 bg-white border border-gray-100 rounded-2xl outline-none text-[10px] font-black uppercase text-[#B5935E]" placeholder="SPECIFY BASE..." onChange={e => setSale({...sale, otherBase: toCaps(e.target.value)})} />}
-              </section>
-
-              <section>
-                <Label>Colour / Letter</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['Red', 'Blue', 'Yellow', 'Purple', 'Pink', 'Clover', 'White', 'Multi', 'Others'].map(col => (
-                    <GridButton key={col} label={col} active={sale.colourLetter === col} onClick={() => setSale({...sale, colourLetter: col})} />
-                  ))}
-                </div>
-                {sale.colourLetter === 'Others' && <input className="w-full mt-3 p-4 bg-white border border-gray-100 rounded-2xl outline-none text-[10px] font-black uppercase text-[#B5935E]" placeholder="SPECIFY COLOUR/LETTER..." onChange={e => setSale({...sale, otherColour: toCaps(e.target.value)})} />}
-              </section>
-
-              <div className="flex gap-4 pt-6">
-                <button onClick={() => setStep(1)} className="flex-1 py-4 text-gray-400 font-black uppercase text-[10px]">Back</button>
-                <button onClick={() => setStep(3)} className="flex-[2] bg-[#1B3022] text-white py-4 rounded-2xl font-black text-sm shadow-xl">PAYMENT & PROFILE</button>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-8">
-              <div className="bg-white p-10 rounded-[3rem] border border-gray-100 text-center shadow-sm">
-                <Label>Price (RM)</Label>
-                <input type="number" className="w-full text-7xl font-serif text-[#1B3022] text-center outline-none bg-transparent" placeholder="0" value={sale.price} onChange={e => setSale({...sale, price: e.target.value})} autoFocus />
-                <div className="flex gap-2 mt-10">
-                  {['TnG', 'Grab', 'Cash', 'Card'].map(p => (
-                    <button key={p} onClick={() => setSale({...sale, payment: p})} className={`flex-1 py-3 text-[10px] font-black rounded-xl border ${sale.payment === p ? 'bg-[#1B3022] text-white' : 'bg-gray-50 text-gray-300 border-transparent'}`}>{p}</button>
-                  ))}
-                </div>
-              </div>
-
-              <section className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm space-y-6">
-                <Label>Customer Persona</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {['F', 'M'].map(g => (
-                    <button key={g} onClick={() => setSale({...sale, customer: {...sale.customer, gender: g}})} className={`py-4 rounded-2xl border text-[11px] font-black transition-all ${sale.customer.gender === g ? 'bg-[#1B3022] text-white' : 'bg-[#FDFBF7] text-gray-400'}`}>{g === 'F' ? 'FEMALE' : 'MALE'}</button>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  {['C', 'M', 'I', 'O'].map(r => (
-                    <button key={r} onClick={() => setSale({...sale, customer: {...sale.customer, race: r}})} className={`flex-1 py-3 rounded-xl border text-[10px] font-black ${sale.customer.race === r ? 'bg-[#B5935E] text-white' : 'bg-[#FDFBF7] text-gray-400 border-transparent'}`}>{r}</button>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  {['<20', '20-35', '35-50', '50+'].map(a => (
-                    <button key={a} onClick={() => setSale({...sale, customer: {...sale.customer, age: a}})} className={`flex-1 py-3 rounded-xl border text-[10px] font-black ${sale.customer.age === a ? 'bg-[#B5935E] text-white' : 'bg-[#FDFBF7] text-gray-400 border-transparent'}`}>{a}</button>
-                  ))}
-                </div>
-              </section>
-
-              <button onClick={() => { setIsSaving(true); setTimeout(() => { setShowSuccess(true); setIsSaving(false); setTimeout(() => { setShowSuccess(false); setStep(1); setSale({...sale, price: ''}); }, 1500)}, 1000)}} className="w-full bg-[#1B3022] text-white py-7 rounded-3xl font-black text-xl shadow-2xl shadow-green-900/40 uppercase tracking-widest">LOG SALE</button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 2. DASHBOARD VIEW */}
-      {step > 0 && view === 'dashboard' && (
-        <div className="animate-in fade-in duration-500 pb-28">
-          <header className="text-center py-8">
-            <h2 className="text-3xl font-serif italic text-[#1B3022]">Live Insights</h2>
-            <p className="text-[9px] text-[#B5935E] font-bold uppercase tracking-[0.4em] mt-1 italic">Session Analytics</p>
-          </header>
-
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="bg-[#1B3022] p-6 rounded-[2.5rem] text-white shadow-xl">
-              <p className="text-[9px] font-bold opacity-40 uppercase tracking-widest">Session Revenue</p>
-              <h3 className="text-3xl font-serif italic mt-1">RM 1,240</h3>
-              <div className="flex items-center gap-1 text-[9px] text-[#B5935E] mt-3 font-black uppercase italic"><TrendingUp size={12} /> On Track</div>
-            </div>
-            <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col justify-between">
-              <p className="text-[9px] font-bold text-[#B5935E] uppercase tracking-widest">Volume</p>
-              <h3 className="text-3xl font-serif italic text-[#1B3022]">18 <span className="text-sm opacity-30">PCS</span></h3>
-              <p className="text-[9px] text-gray-300 font-bold uppercase mt-2">Goal: 25</p>
-            </div>
-          </div>
-
-          <div className="bg-white p-8 rounded-[3rem] border border-gray-50 shadow-sm space-y-8">
-            <section>
-              <h4 className="text-[10px] font-black text-[#B5935E] uppercase tracking-widest mb-6 border-b pb-2">Customer Profile</h4>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                <div className="space-y-4">
-                  <StatBar label="Chinese" percentage={75} />
-                  <StatBar label="Malay" percentage={15} />
-                  <StatBar label="Indian" percentage={10} />
-                </div>
-                <div className="space-y-4">
-                  <StatBar label="20-35" percentage={60} color="bg-[#1B3022]" />
-                  <StatBar label="35-50" percentage={30} color="bg-[#1B3022]" />
-                  <StatBar label="50+" percentage={10} color="bg-[#1B3022]" />
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h4 className="text-[10px] font-black text-[#B5935E] uppercase tracking-widest mb-4">Top Payment</h4>
-              <div className="flex items-center gap-3 bg-[#FDFBF7] p-4 rounded-2xl border border-gray-50">
-                <div className="bg-[#1B3022] text-white p-2 rounded-lg font-black text-[10px]">TNG</div>
-                <p className="text-[11px] font-bold">85% of transactions are via E-Wallet</p>
-              </div>
-            </section>
-          </div>
-        </div>
-      )}
-
-      {/* 3. SETTINGS / SESSION MANAGER VIEW */}
-      {step > 0 && view === 'settings' && (
-        <div className="animate-in slide-in-from-bottom duration-500 pt-10 pb-28">
-           <div className="bg-white p-8 rounded-[3rem] shadow-sm border border-gray-100">
-              <h2 className="text-2xl font-serif italic text-[#1B3022] mb-2">Session Manager</h2>
-              <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-8">Current active tracker details</p>
-              
-              <div className="space-y-6">
-                <div className="flex justify-between border-b pb-4">
-                  <span className="text-[10px] font-black text-[#B5935E] uppercase">Organiser</span>
-                  <span className="text-xs font-bold text-[#1B3022]">{session.organiser}</span>
-                </div>
-                <div className="flex justify-between border-b pb-4">
-                  <span className="text-[10px] font-black text-[#B5935E] uppercase">Venue</span>
-                  <span className="text-xs font-bold text-[#1B3022]">{session.location}</span>
-                </div>
-                <div className="flex justify-between border-b pb-4">
-                  <span className="text-[10px] font-black text-[#B5935E] uppercase">Date</span>
-                  <span className="text-xs font-bold text-[#1B3022]">{session.date}</span>
-                </div>
-              </div>
-
-              <div className="mt-12 space-y-3">
-                <button onClick={() => setStep(0)} className="w-full bg-[#FDFBF7] text-[#1B3022] py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2 border border-gray-100">
-                   <MapPin size={14}/> Change Location
-                </button>
-                <button onClick={() => { if(window.confirm('End Session? Data will be locked.')){ setStep(0); setView('input'); }}} className="w-full bg-red-50 text-red-400 py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2">
-                   <LogOut size={14}/> Close Session
-                </button>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* FIXED BOTTOM NAVIGATION */}
-      {step > 0 && (
-        <nav className="fixed bottom-8 left-6 right-6 bg-[#1B3022] rounded-[2.5rem] p-2 flex justify-around items-center z-50 border border-white/5 shadow-2xl">
-          <button onClick={() => setView('input')} className={`p-4 rounded-2xl transition-all ${view === 'input' ? 'bg-[#B5935E] text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}><Plus size={24} /></button>
-          <button onClick={() => setView('dashboard')} className={`p-4 rounded-2xl transition-all ${view === 'dashboard' ? 'bg-[#B5935E] text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}><BarChart3 size={24} /></button>
-          <button onClick={() => setView('settings')} className={`p-4 rounded-2xl transition-all ${view === 'settings' ? 'bg-[#B5935E] text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}><Settings size={24} /></button>
-        </nav>
-      )}
-    </div>
-  );
-};
-
-export default PetalArchiveOS;
+                {sale.shape === 'Others' && <input className="w-full mt-3 p-4 bg-white border border-gray-100 rounded-2xl outline-none text-[10px] font-black uppercase text-[#B59
