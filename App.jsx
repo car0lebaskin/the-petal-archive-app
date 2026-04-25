@@ -56,7 +56,7 @@ const PetalArchiveOS = () => {
 // --- 2. PASTE THE NEW CODE HERE (Between your state and the return) ---
   
   const logTransaction = async () => {
-    const apiURL = "https://script.google.com/macros/s/AKfycbzE6DQy-V9E_6qfiitsy00UlIGn5c5viK0wsvz8R_rFuGRLnttSXXPMJ1otKZNKF4xB/exec"; // Your Google URL
+    const apiURL = "https://script.google.com/macros/s/AKfycbyGBxMmu5__UE_ZYxRd_bPbxCIlHyFYL1Rzt0yejKopzF0J0KyFisJhMfUkgUjP9owM/exec"; // Your Google URL
     const transactionId = `TX-${Date.now()}`;
     const payload = { transactionId, session, basket, customer };
 
