@@ -195,10 +195,10 @@ const PetalArchiveOS = () => {
             <section className="bg-white p-2 rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 flex items-center gap-2"><BookOpen size={18} className="text-[#B5935E]"/><Label>Price Directory</Label></div>
               <div className="space-y-1">
-                {[{c: "Necklaces", i: [{n: "Cable / Snake Chain", p: "95"}, {n: "Beaded / Kiss / M-Paperclip", p: "105"}, {n: "Paperclip etc.", p: "129"}, {n: "3-Pearl / Agate", p: "159"}, {n: "1/2 Pearl / Full (Star)", p: "179"}, {n: "Full Pearl", p: "239"}]},
-                  {c: "Bracelets", i: [{n: "Snake / Box Slider", p: "95"}, {n: "M-Paper / Twist / Paperclip", p: "105"}, {n: "CZ / Big Link / Knot", p: "115"}, {n: "1/2 Pearl", p: "149"}, {n: "Charm Bracelet (3 Charms)", p: "169"}]},
+                {[{c: "Necklaces", i: [{n: "Cable / Snake Chain", p: "95"}, {n: "Beaded / Kiss / M-Paperclip / Paperclip", p: "105"}, {n: "ETC", p: "129"}, {n: "3-Pearl / 3-Agate / White C2 / Multicoloured C2", p: "159"}, {n: "1/2 Pearl / Star Pearl", p: "179"}, {n: "Full Pearl", p: "239"}]},
+                  {c: "Bracelets", i: [{n: "Snake / Skinny Snake / Thick / Box Chain", p: "95"}, {n: "M-Paper / Twist / Paperclip", p: "105"}, {n: "Pretzel / ETC / CZ-Big Link / Big Link-Knot / White C2 / Black C2 / Green C2 / Multicoloured C2", p: "115"}, {n: "1/2 Pearl", p: "149"}, {n: "Charm Bracelet (3 Charms)", p: "169"}]},
                   {c: "Bangles, Rings & Earrings", i: [{n: "Bangle (Twist)", p: "129"}, {n: "Bangle (Curb / Open Link)", p: "115"}, {n: "Hoop Earrings", p: "95"}, {n: "Hook / Stud / Dangle", p: "89"}, {n: "Pebble Large / Small", p: "95 / 89"}, {n: "Rings", p: "89"}]},
-                  {c: "Add-Ons & Standalone", i: [{n: "Floral Charm", p: "40"}, {n: "Letter Charm", p: "30"}, {n: "Pendant Alone", p: "75"}, {n: "Floral Charm Alone", p: "55"}, {n: "Letter Charm Alone", p: "45"}]}
+                  {c: "Add-Ons & Standalone", i: [{n: "Floral Charm", p: "40"}, {n: "Letter Charm", p: "30"}, {n: "STG PDP Charm", p: "40"}, {n: "Pendant Alone", p: "75"}, {n: "Floral Charm Alone", p: "55"}, {n: "Letter Charm Alone", p: "45"}, {n: "STG PDP Charm Alone", p: "55"}]}
                 ].map((group, i) => (
                   <div key={i} className="px-2">
                     <button onClick={() => setOpenPriceCat(openPriceCat === i ? null : i)} className="w-full p-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-[#1B3022] bg-[#FDFBF7] rounded-xl mb-1">
