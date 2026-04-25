@@ -53,6 +53,30 @@ const PetalArchiveOS = () => {
     <button onClick={onClick} className={`py-4 px-1 rounded-xl border text-[10px] font-black transition-all ${active ? 'bg-[#1B3022] text-white border-[#1B3022] shadow-md' : 'bg-white text-[#1B3022] border-gray-100 shadow-sm'}`}>{label}</button>
   );
 
+// --- 2. PASTE THE NEW CODE HERE (Between your state and the return) ---
+  
+  const logTransaction = async () => {
+    const apiURL = "https://script.google.com/macros/s/AKfycbzw_PYwvuEa-sHKhXbuyGNgBzaPx6zUo15v3yc-DBa77zh3-rCaJBSy0bqC_xnWrJFk/exec"; // Your Google URL
+    const transactionId = `TX-${Date.now()}`;
+    const payload = { transactionId, session, basket, customer };
+
+    try {
+      await fetch(apiURL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      setShowSuccess(true);
+      setBasket([]);
+      setStep(1);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (err) {
+      alert("Sync Error: Check connection.");
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1B3022] font-sans p-4 max-w-md mx-auto pb-32 overflow-x-hidden">
       
@@ -116,7 +140,7 @@ const PetalArchiveOS = () => {
                   <div className="grid grid-cols-4 gap-2">{['C', 'M', 'I', 'O'].map(r => (<button key={r} onClick={() => setCustomer({...customer, race: r})} className={`py-2 rounded-lg text-[10px] font-black ${customer.race === r ? 'bg-[#B5935E] text-white' : 'bg-gray-50'}`}>{r}</button>))}</div>
                   <div className="grid grid-cols-5 gap-2">{['10s', '20s', '30s', '40s', '50s'].map(a => (<button key={a} onClick={() => setCustomer({...customer, age: a})} className={`py-2 rounded-lg text-[10px] font-black ${customer.age === a ? 'bg-[#B5935E] text-white' : 'bg-gray-50'}`}>{a}</button>))}</div>
                 </section>
-                <button onClick={() => { setShowSuccess(true); setBasket([]); setStep(1); setTimeout(() => setShowSuccess(false), 1500); }} className="w-full bg-[#1B3022] text-white py-7 rounded-3xl font-black text-xl shadow-2xl uppercase tracking-widest">LOG TRANSACTION</button>
+                <button onClick={logTransaction} className="w-full bg-[#1B3022] text-white py-7 rounded-3xl font-black text-xl shadow-2xl uppercase tracking-widest">LOG TRANSACTION</button>
               </div>
             )}
           </motion.div>
@@ -218,6 +242,26 @@ const PetalArchiveOS = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      {showSuccess && (
+  <motion.div 
+    initial={{ opacity: 0 }} 
+    animate={{ opacity: 1 }} 
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1B3022]/90 backdrop-blur-md p-6"
+  >
+    <motion.div 
+      initial={{ scale: 0.9, y: 20 }}
+      animate={{ scale: 1, y: 0 }}
+      className="bg-white p-12 rounded-[3rem] text-center shadow-2xl"
+    >
+      <div className="w-20 h-20 bg-[#E8EEE9] rounded-full flex items-center justify-center mx-auto mb-6">
+        <CheckCircle2 className="text-[#1B3022]" size={40} />
+      </div>
+      <h2 className="text-2xl font-serif italic text-[#1B3022]">Sale Archived</h2>
+      <p className="text-[10px] font-black uppercase tracking-widest text-[#B5935E] mt-2">Syncing with Master Sheet...</p>
+    </motion.div>
+  </motion.div>
+)}
 
       {/* NAVIGATION */}
       {step > 0 && (
