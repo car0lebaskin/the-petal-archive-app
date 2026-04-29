@@ -16,6 +16,7 @@ import {
   RefreshCcw,
   Trash2
 } from 'lucide-react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const API_URL = "https://script.google.com/macros/s/AKfycby0J-XRdWfiG_gWmbo0ZWWYq9U21oKraAmGltJLyYfYkKK3WE0IRAxM9NujToig725I/exec";
 const MASTER_SHEET_URL = "https://docs.google.com/spreadsheets/d/1h_fWIhLKMdXzduULMeH0OG56y1PdaG2G4WmZppyk7YI/edit?gid=0#gid=0";
@@ -1274,6 +1275,7 @@ const PetalArchiveOS = () => {
           </button>
         </nav>
       )}
+      <SpeedInsights />
     </div>
   );
 };
