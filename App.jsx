@@ -263,11 +263,83 @@ const PetalArchiveOS = () => {
     fetchLiveData();
   }, [view]);
 
-  const stats = useMemo(() => {
+  const getRowValue = (row, keys, fallback = '') => {
+    for (const key of keys) {
+      if (row?.[key] !== undefined && row?.[key] !== null && row?.[key] !== '') {
+        return row[key];
+      }
+    }
+    return fallback;
+  };
+
+  const normalizeKey = value => toCaps(value).trim();
+
+  const getRowDateKey = row => {
+    const explicitDate = getRowValue(row, ['date', 'Date']);
+    if (typeof explicitDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(explicitDate)) {
+      return explicitDate;
+    }
+
+    return getDateKey(explicitDate || getRowValue(row, ['timestamp', 'Timestamp']));
+  };
+
+  const getRowCustomerPart = (row, field, index) => {
+    const direct = getRowValue(row, [
+      field,
+      field.toUpperCase(),
+      field.charAt(0).toUpperCase() + field.slice(1)
+    ]);
+
+    if (direct) return String(direct);
+
+    const customerText = getRowValue(row, ['customer', 'Customer']);
+    if (!customerText) return '';
+
+    return String(customerText).split(' | ')[index] || '';
+  };
+
+  const getRowColour = row => getRowValue(row, [
+    'colourLetter',
+    'colourletter',
+    'colour',
+    'color',
+    'colour/letter',
+    'Colour / Letter',
+    'Embedded Flower / Letter'
+  ], 'UNKNOWN');
+
+  const sessionLiveData = useMemo(() => {
+    const finalLocation = session.location === 'Others' ? session.otherLocation : session.location;
+    const targetDate = session.date;
+    const targetEvent = normalizeKey(session.eventName);
+    const targetOrganiser = normalizeKey(session.organiser);
+    const targetLocation = normalizeKey(finalLocation);
+
+    return liveData.filter(row => {
+      const rowDate = getRowDateKey(row);
+      const rowEvent = normalizeKey(getRowValue(row, ['event', 'Event', 'eventName', 'Event Name']));
+      const rowOrganiser = normalizeKey(getRowValue(row, ['organiser', 'Organiser', 'organizer', 'Organizer']));
+      const rowLocation = normalizeKey(getRowValue(row, ['location', 'Location']));
+
+      return (
+        rowDate === targetDate &&
+        rowEvent === targetEvent &&
+        rowOrganiser === targetOrganiser &&
+        rowLocation === targetLocation
+      );
+    });
+  }, [liveData, session]);
+
+  const buildStats = (sourceData = []) => {
     const categories = {};
     const chains = {};
-    const colours = {};
+    const styles = {};
+    const shapes = {};
     const series = {};
+    const metals = {};
+    const bases = {};
+    const colours = {};
+    const others = {};
     const locationRevenue = {};
     const monthlyRevenue = new Array(12).fill(0);
     const raceCounts = { C: 0, M: 0, I: 0, O: 0 };
@@ -276,26 +348,58 @@ const PetalArchiveOS = () => {
     const paymentCounts = { Cash: 0, Card: 0, QR: 0 };
     const rushHours = new Array(24).fill(0);
     const transactionIds = new Set();
-
     const locationMap = {};
     const segmentRevenue = {};
 
     let totalRevenue = 0;
 
-    liveData.forEach((row, index) => {
-      const price = safeNumber(row.price);
-      const location = row.location || 'UNKNOWN';
-      const transactionId = row.transactionId || `${row.timestamp || 'NO_TIME'}-${index}`;
-      const hourKey = getHourKey(row.timestamp);
-      const dateKey = row.date || getDateKey(row.timestamp);
+    const count = (bucket, value) => {
+      const key = value || 'UNKNOWN';
+      bucket[key] = (bucket[key] || 0) + 1;
+    };
+
+    const trackOther = (value, allowedOptions) => {
+      if (!value || value === 'UNKNOWN') return;
+      if (!allowedOptions.includes(value)) {
+        others[value] = (others[value] || 0) + 1;
+      }
+    };
+
+    sourceData.forEach((row, index) => {
+      const price = safeNumber(getRowValue(row, ['price', 'Price']));
+      const timestamp = getRowValue(row, ['timestamp', 'Timestamp']);
+      const transactionId = getRowValue(row, ['transactionId', 'transactionid', 'Transaction ID'], `${timestamp || 'NO_TIME'}-${index}`);
+      const location = getRowValue(row, ['location', 'Location'], 'UNKNOWN');
+      const category = getRowValue(row, ['category', 'Category'], 'UNKNOWN');
+      const chain = getRowValue(row, ['chain', 'Chain'], 'UNKNOWN');
+      const style = getRowValue(row, ['style', 'Style'], 'UNKNOWN');
+      const shape = getRowValue(row, ['shape', 'Shape'], 'UNKNOWN');
+      const itemSeries = getRowValue(row, ['series', 'Series'], 'UNKNOWN');
+      const metal = getRowValue(row, ['metal', 'Metal'], 'UNKNOWN');
+      const base = getRowValue(row, ['base', 'Base'], 'UNKNOWN');
+      const colour = getRowColour(row);
+      const payment = getRowValue(row, ['payment', 'Payment']);
+      const hourKey = getHourKey(timestamp);
+      const dateKey = getRowDateKey(row);
 
       totalRevenue += price;
       transactionIds.add(transactionId);
 
-      categories[row.category || 'UNKNOWN'] = (categories[row.category || 'UNKNOWN'] || 0) + 1;
-      chains[row.chain || 'UNKNOWN'] = (chains[row.chain || 'UNKNOWN'] || 0) + 1;
-      colours[row.colourLetter || row.colour || 'UNKNOWN'] = (colours[row.colourLetter || row.colour || 'UNKNOWN'] || 0) + 1;
-      series[row.series || 'UNKNOWN'] = (series[row.series || 'UNKNOWN'] || 0) + 1;
+      count(categories, category);
+      count(chains, chain);
+      count(styles, style);
+      count(shapes, shape);
+      count(series, itemSeries);
+      count(metals, metal);
+      count(bases, base);
+      count(colours, colour);
+
+      trackOther(chain, CHAIN_TYPES);
+      trackOther(style, STYLE_OPTIONS);
+      trackOther(shape, SHAPE_OPTIONS);
+      trackOther(itemSeries, SERIES_OPTIONS);
+      trackOther(base, BASE_OPTIONS);
+      trackOther(colour, COLOUR_OPTIONS);
 
       locationRevenue[location] = (locationRevenue[location] || 0) + price;
 
@@ -316,37 +420,33 @@ const PetalArchiveOS = () => {
       if (hourKey !== 'UNKNOWN') locationMap[location].activeHours.add(hourKey);
       if (dateKey !== 'UNKNOWN') locationMap[location].sessions.add(dateKey);
 
-      const date = new Date(row.timestamp);
-
+      const date = new Date(timestamp);
       if (!Number.isNaN(date.getTime())) {
         monthlyRevenue[date.getMonth()] += price;
         rushHours[date.getHours()] += 1;
       }
 
-      if (row.customer) {
-        const parts = row.customer.split(' | ');
-        const race = parts[0];
-        const age = parts[1];
-        const gender = parts[2];
+      const race = getRowCustomerPart(row, 'race', 0);
+      const age = getRowCustomerPart(row, 'age', 1);
+      const gender = getRowCustomerPart(row, 'gender', 2);
 
-        if (race) raceCounts[race] = (raceCounts[race] || 0) + 1;
-        if (age) ageCounts[age] = (ageCounts[age] || 0) + 1;
-        if (gender) genderCounts[gender] = (genderCounts[gender] || 0) + 1;
+      if (race) raceCounts[race] = (raceCounts[race] || 0) + 1;
+      if (age) ageCounts[age] = (ageCounts[age] || 0) + 1;
+      if (gender) genderCounts[gender] = (genderCounts[gender] || 0) + 1;
 
-        const segmentKey = [age, gender, race].filter(Boolean).join(' ');
-        if (segmentKey) {
-          segmentRevenue[segmentKey] = (segmentRevenue[segmentKey] || 0) + price;
-        }
+      const segmentKey = [age, gender, race].filter(Boolean).join(' ');
+      if (segmentKey) {
+        segmentRevenue[segmentKey] = (segmentRevenue[segmentKey] || 0) + price;
       }
 
-      if (row.payment) {
-        paymentCounts[row.payment] = (paymentCounts[row.payment] || 0) + 1;
+      if (payment) {
+        paymentCounts[payment] = (paymentCounts[payment] || 0) + 1;
       }
     });
 
     const totalTransactions = transactionIds.size || 0;
     const averageOrderValue = totalTransactions ? totalRevenue / totalTransactions : 0;
-    const itemsPerTransaction = totalTransactions ? liveData.length / totalTransactions : 0;
+    const itemsPerTransaction = totalTransactions ? sourceData.length / totalTransactions : 0;
 
     const locationEfficiency = Object.values(locationMap)
       .map(loc => {
@@ -356,7 +456,6 @@ const PetalArchiveOS = () => {
         const revenuePerHour = loc.revenue / activeHours;
         const transactionsPerHour = transactions / activeHours;
         const aov = transactions ? loc.revenue / transactions : 0;
-
         const score = revenuePerHour * 0.5 + transactionsPerHour * 30 * 0.3 + aov * 0.2;
 
         return {
@@ -376,24 +475,26 @@ const PetalArchiveOS = () => {
       .sort((a, b) => b.score - a.score);
 
     const topLocation = locationEfficiency[0] || null;
-
-    const topHourIndex = rushHours.reduce((best, count, index, arr) => {
-      return count > arr[best] ? index : best;
+    const topHourIndex = rushHours.reduce((best, countValue, index, arr) => {
+      return countValue > arr[best] ? index : best;
     }, 0);
-
-    const topCustomerSegment = Object.entries(segmentRevenue)
-      .sort((a, b) => b[1] - a[1])[0];
+    const topCustomerSegment = Object.entries(segmentRevenue).sort((a, b) => b[1] - a[1])[0];
 
     return {
       totalRevenue,
-      totalPieces: liveData.length,
+      totalPieces: sourceData.length,
       totalTransactions,
       averageOrderValue,
       itemsPerTransaction,
       categories,
       chains,
-      colours,
+      styles,
+      shapes,
       series,
+      metals,
+      bases,
+      colours,
+      others,
       locationRevenue,
       locationEfficiency,
       topLocation,
@@ -406,7 +507,10 @@ const PetalArchiveOS = () => {
       topHourIndex,
       topCustomerSegment
     };
-  }, [liveData]);
+  };
+
+  const sessionStats = useMemo(() => buildStats(sessionLiveData), [sessionLiveData]);
+  const biStats = useMemo(() => buildStats(liveData), [liveData]);
 
   const saveSessionAndOpen = () => {
     const cleanEventName = toCaps(session.eventName).trim();
@@ -1055,41 +1159,51 @@ const PetalArchiveOS = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-[#1B3022] p-6 rounded-[2.5rem] text-white shadow-xl flex flex-col justify-between h-32">
                 <p className="text-[9px] font-bold opacity-40 uppercase tracking-widest">Revenue</p>
-                <h3 className="text-3xl font-serif italic">RM {Math.round(stats.totalRevenue).toLocaleString()}</h3>
+                <h3 className="text-3xl font-serif italic">RM {Math.round(sessionStats.totalRevenue).toLocaleString()}</h3>
               </div>
 
               <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col justify-between h-32">
                 <p className="text-[9px] font-bold text-[#B5935E] uppercase tracking-widest">Pieces Sold</p>
-                <h3 className="text-3xl font-serif italic text-[#1B3022]">{stats.totalPieces}</h3>
+                <h3 className="text-3xl font-serif italic text-[#1B3022]">{sessionStats.totalPieces}</h3>
               </div>
 
               <MetricCard
                 label="Average Order"
-                value={`RM ${Math.round(stats.averageOrderValue)}`}
-                sub={`${stats.totalTransactions} transactions`}
+                value={`RM ${Math.round(sessionStats.averageOrderValue)}`}
+                sub={`${sessionStats.totalTransactions} transactions`}
               />
 
               <MetricCard
                 label="Basket Size"
-                value={stats.itemsPerTransaction.toFixed(1)}
+                value={sessionStats.itemsPerTransaction.toFixed(1)}
                 sub="items per sale"
               />
             </div>
 
             <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
               <Label>Top Categories</Label>
-              {renderTopList(stats.categories)}
+              {renderTopList(sessionStats.categories)}
+            </section>
+
+            <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
+              <Label>Top Series</Label>
+              {renderTopList(sessionStats.series)}
+            </section>
+
+            <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
+              <Label>Top Colours / Letters</Label>
+              {renderTopList(sessionStats.colours)}
             </section>
 
             <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
               <Label>Customer Age Split</Label>
               <div className="space-y-4">
-                {Object.entries(stats.ageCounts).map(([age, count]) => (
+                {Object.entries(sessionStats.ageCounts).map(([age, count]) => (
                   <BarRow
                     key={age}
                     label={age}
                     count={count}
-                    total={stats.totalPieces}
+                    total={sessionStats.totalPieces}
                     color={AGE_COLORS[age]}
                   />
                 ))}
@@ -1099,12 +1213,12 @@ const PetalArchiveOS = () => {
             <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
               <Label>Customer Race Split</Label>
               <div className="space-y-4">
-                {Object.entries(stats.raceCounts).map(([race, count]) => (
+                {Object.entries(sessionStats.raceCounts).map(([race, count]) => (
                   <BarRow
                     key={race}
                     label={race}
                     count={count}
-                    total={stats.totalPieces}
+                    total={sessionStats.totalPieces}
                     color={RACE_COLORS[race]}
                   />
                 ))}
@@ -1132,31 +1246,31 @@ const PetalArchiveOS = () => {
                   </Label>
 
                   <h4 className="text-3xl font-serif italic">
-                    {stats.topLocation?.location || 'NO DATA'}
+                    {biStats.topLocation?.location || 'NO DATA'}
                   </h4>
 
-                  {stats.topLocation && !stats.topLocation.isReliable && (
+                  {biStats.topLocation && !biStats.topLocation.isReliable && (
                     <p className="text-[9px] font-black uppercase tracking-widest text-red-200 mt-2">
                       Insufficient sample size
                     </p>
                   )}
                 </div>
 
-                {stats.topLocation && (
+                {biStats.topLocation && (
                   <div className="grid grid-cols-3 gap-3 border-t border-white/10 pt-5">
                     <div>
                       <p className="text-[8px] opacity-40 uppercase font-black">RM / Hour</p>
-                      <p className="text-lg font-serif">RM {Math.round(stats.topLocation.revenuePerHour)}</p>
+                      <p className="text-lg font-serif">RM {Math.round(biStats.topLocation.revenuePerHour)}</p>
                     </div>
 
                     <div>
                       <p className="text-[8px] opacity-40 uppercase font-black">Sales / Hour</p>
-                      <p className="text-lg font-serif">{stats.topLocation.transactionsPerHour.toFixed(1)}</p>
+                      <p className="text-lg font-serif">{biStats.topLocation.transactionsPerHour.toFixed(1)}</p>
                     </div>
 
                     <div>
                       <p className="text-[8px] opacity-40 uppercase font-black">AOV</p>
-                      <p className="text-lg font-serif">RM {Math.round(stats.topLocation.aov)}</p>
+                      <p className="text-lg font-serif">RM {Math.round(biStats.topLocation.aov)}</p>
                     </div>
                   </div>
                 )}
@@ -1167,7 +1281,7 @@ const PetalArchiveOS = () => {
               <Label>Location Efficiency Ranking</Label>
 
               <div className="space-y-5">
-                {stats.locationEfficiency.map((loc, index) => (
+                {biStats.locationEfficiency.map((loc, index) => (
                   <div key={loc.location} className="border-b border-gray-50 pb-4 last:border-0">
                     <div className="flex justify-between items-start gap-3 mb-2">
                       <div>
@@ -1191,7 +1305,7 @@ const PetalArchiveOS = () => {
                       <div
                         className="h-full bg-[#1B3022]"
                         style={{
-                          width: `${(loc.score / (stats.locationEfficiency[0]?.score || 1)) * 100}%`
+                          width: `${(loc.score / (biStats.locationEfficiency[0]?.score || 1)) * 100}%`
                         }}
                       />
                     </div>
@@ -1209,36 +1323,66 @@ const PetalArchiveOS = () => {
             <section className="grid grid-cols-2 gap-4">
               <MetricCard
                 label="Peak Hour"
-                value={`${stats.topHourIndex}:00`}
-                sub={`${stats.rushHours[stats.topHourIndex] || 0} sales`}
+                value={`${biStats.topHourIndex}:00`}
+                sub={`${biStats.rushHours[biStats.topHourIndex] || 0} sales`}
               />
 
               <MetricCard
                 label="Best Segment"
-                value={stats.topCustomerSegment?.[0] || 'NO DATA'}
-                sub={stats.topCustomerSegment ? `RM ${Math.round(stats.topCustomerSegment[1])}` : ''}
+                value={biStats.topCustomerSegment?.[0] || 'NO DATA'}
+                sub={biStats.topCustomerSegment ? `RM ${Math.round(biStats.topCustomerSegment[1])}` : ''}
               />
             </section>
 
             <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
               <Label>Top Chains</Label>
-              {renderTopList(stats.chains)}
+              {renderTopList(biStats.chains)}
+            </section>
+
+            <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
+              <Label>Top Series</Label>
+              {renderTopList(biStats.series)}
+            </section>
+
+            <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
+              <Label>Top Styles</Label>
+              {renderTopList(biStats.styles)}
+            </section>
+
+            <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
+              <Label>Top Metals</Label>
+              {renderTopList(biStats.metals)}
+            </section>
+
+            <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
+              <Label>Top Shapes</Label>
+              {renderTopList(biStats.shapes)}
+            </section>
+
+            <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
+              <Label>Top Bases</Label>
+              {renderTopList(biStats.bases)}
             </section>
 
             <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
               <Label>Top Colours / Letters</Label>
-              {renderTopList(stats.colours)}
+              {renderTopList(biStats.colours)}
+            </section>
+
+            <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
+              <Label>Custom / Others Entries</Label>
+              {renderTopList(biStats.others, 'ENTRIES')}
             </section>
 
             <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
               <Label>Payment Split</Label>
               <div className="space-y-4">
-                {Object.entries(stats.paymentCounts).map(([payment, count]) => (
+                {Object.entries(biStats.paymentCounts).map(([payment, count]) => (
                   <BarRow
                     key={payment}
                     label={payment}
                     count={count}
-                    total={stats.totalTransactions || stats.totalPieces}
+                    total={biStats.totalTransactions || biStats.totalPieces}
                     color={payment === 'QR' ? '#1B3022' : payment === 'Card' ? '#B5935E' : '#7E9181'}
                   />
                 ))}
@@ -1249,12 +1393,12 @@ const PetalArchiveOS = () => {
               <Label>Monthly Seasonality (RM)</Label>
 
               <div className="flex items-end gap-1 h-24 pt-4">
-                {stats.monthlyRevenue.map((rev, i) => (
+                {biStats.monthlyRevenue.map((rev, i) => (
                   <div
                     key={i}
                     className="flex-1 bg-[#1B3022] rounded-t-sm"
                     style={{
-                      height: `${(rev / (Math.max(...stats.monthlyRevenue) || 1)) * 100}%`
+                      height: `${(rev / (Math.max(...biStats.monthlyRevenue) || 1)) * 100}%`
                     }}
                   />
                 ))}
