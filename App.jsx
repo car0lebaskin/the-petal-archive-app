@@ -346,6 +346,7 @@ const PetalArchiveOS = () => {
     const ageCounts = { '10s': 0, '20s': 0, '30s': 0, '40s': 0, '50s': 0 };
     const genderCounts = { F: 0, M: 0 };
     const paymentCounts = { Cash: 0, Card: 0, QR: 0 };
+    const paymentRevenue = { Cash: 0, Card: 0, QR: 0 };
     const rushHours = new Array(24).fill(0);
     const transactionIds = new Set();
     const locationMap = {};
@@ -441,6 +442,7 @@ const PetalArchiveOS = () => {
 
       if (payment) {
         paymentCounts[payment] = (paymentCounts[payment] || 0) + 1;
+        paymentRevenue[payment] = (paymentRevenue[payment] || 0) + price;
       }
     });
 
@@ -503,6 +505,7 @@ const PetalArchiveOS = () => {
       ageCounts,
       genderCounts,
       paymentCounts,
+      paymentRevenue,
       rushHours,
       topHourIndex,
       topCustomerSegment
@@ -1224,6 +1227,42 @@ const PetalArchiveOS = () => {
                 ))}
               </div>
             </section>
+
+            <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
+  <Label>Payment Revenue Split</Label>
+
+  <div className="space-y-4">
+    {Object.entries(sessionStats.paymentRevenue).map(([payment, value]) => {
+      const percentage = sessionStats.totalRevenue
+        ? Math.round((value / sessionStats.totalRevenue) * 100)
+        : 0;
+
+      return (
+        <div key={payment}>
+          <div className="flex justify-between text-[10px] font-black uppercase mb-1">
+            <span>{payment}</span>
+            <span>RM {Math.round(value)} / {percentage}%</span>
+          </div>
+
+          <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${percentage}%`,
+                backgroundColor:
+                  payment === 'QR'
+                    ? '#1B3022'
+                    : payment === 'Card'
+                      ? '#B5935E'
+                      : '#7E9181'
+              }}
+            />
+          </div>
+        </div>
+      );
+    })}
+  </div>
+</section>
           </motion.div>
         )}
 
