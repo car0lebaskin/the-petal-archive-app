@@ -17,7 +17,7 @@ import {
   Trash2
 } from 'lucide-react';
 
-const API_URL = "https://script.google.com/macros/s/AKfycby0J-XRdWfiG_gWmbo0ZWWYq9U21oKraAmGltJLyYfYkKK3WE0IRAxM9NujToig725I/exec";
+const API_URL = "https://script.google.com/macros/library/d/1-Ohg4EPIhcc3i_APXBa-681n6nRL3WbI_tXNLw_aBmhcTydNkCGqD35X/5";
 const MASTER_SHEET_URL = "https://docs.google.com/spreadsheets/d/1h_fWIhLKMdXzduULMeH0OG56y1PdaG2G4WmZppyk7YI/edit?gid=0#gid=0";
 
 const STORAGE_KEY = 'petal_archive_v17';
