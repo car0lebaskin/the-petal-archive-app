@@ -309,7 +309,9 @@ const PetalArchiveOS = () => {
   ], 'UNKNOWN');
 
   const sessionLiveData = useMemo(() => {
-  const finalLocation = session.location === 'Others' ? session.otherLocation : session.location;
+  const finalLocation = normalizeKey(
+  session.location === 'Others' ? session.otherLocation : session.location
+);
 
   const targetEvent = normalizeKey(session.eventName);
   const targetOrganiser = normalizeKey(session.organiser);
