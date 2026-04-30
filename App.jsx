@@ -309,26 +309,24 @@ const PetalArchiveOS = () => {
   ], 'UNKNOWN');
 
   const sessionLiveData = useMemo(() => {
-    const finalLocation = session.location === 'Others' ? session.otherLocation : session.location;
-    const targetDate = session.date;
-    const targetEvent = normalizeKey(session.eventName);
-    const targetOrganiser = normalizeKey(session.organiser);
-    const targetLocation = normalizeKey(finalLocation);
+  const finalLocation = session.location === 'Others' ? session.otherLocation : session.location;
 
-    return liveData.filter(row => {
-      const rowDate = getRowDateKey(row);
-      const rowEvent = normalizeKey(getRowValue(row, ['event', 'Event', 'eventName', 'Event Name']));
-      const rowOrganiser = normalizeKey(getRowValue(row, ['organiser', 'Organiser', 'organizer', 'Organizer']));
-      const rowLocation = normalizeKey(getRowValue(row, ['location', 'Location']));
+  const targetEvent = normalizeKey(session.eventName);
+  const targetOrganiser = normalizeKey(session.organiser);
+  const targetLocation = normalizeKey(finalLocation);
 
-      return (
-        rowDate === targetDate &&
-        rowEvent === targetEvent &&
-        rowOrganiser === targetOrganiser &&
-        rowLocation === targetLocation
-      );
-    });
-  }, [liveData, session]);
+  return liveData.filter(row => {
+    const rowEvent = normalizeKey(getRowValue(row, ['event', 'Event', 'eventName', 'Event Name']));
+    const rowOrganiser = normalizeKey(getRowValue(row, ['organiser', 'Organiser', 'organizer', 'Organizer']));
+    const rowLocation = normalizeKey(getRowValue(row, ['location', 'Location']));
+
+    return (
+      rowEvent === targetEvent &&
+      rowOrganiser === targetOrganiser &&
+      rowLocation === targetLocation
+    );
+  });
+}, [liveData, session]);
 
   const buildStats = (sourceData = []) => {
     const categories = {};
