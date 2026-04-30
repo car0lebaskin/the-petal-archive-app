@@ -1196,51 +1196,6 @@ const PetalArchiveOS = () => {
             </section>
 
             <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
-  <Label>Payment Revenue Split</Label>
-
-  <div className="space-y-4">
-    {['Card', 'QR', 'Cash'].map(payment => {
-      const paymentRows = sessionLiveData.filter(row => {
-        const rowPayment = getRowValue(row, ['payment', 'Payment']);
-        return normalizeKey(rowPayment) === normalizeKey(payment);
-      });
-
-      const total = paymentRows.reduce((acc, row) => {
-        return acc + safeNumber(getRowValue(row, ['price', 'Price']));
-      }, 0);
-
-      const percentage = sessionStats.totalRevenue
-        ? Math.round((total / sessionStats.totalRevenue) * 100)
-        : 0;
-
-      return (
-        <div key={payment}>
-          <div className="flex justify-between text-[10px] font-black uppercase mb-1">
-            <span>{payment}</span>
-            <span>RM {total} / {percentage}%</span>
-          </div>
-
-          <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${percentage}%`,
-                backgroundColor:
-                  payment === 'Card'
-                    ? '#B5935E'
-                    : payment === 'QR'
-                      ? '#1B3022'
-                      : '#7E9181'
-              }}
-            />
-          </div>
-        </div>
-      );
-    })}
-  </div>
-</section>
-
-            <section className="bg-white p-8 rounded-[3rem] border border-gray-100">
               <Label>Customer Age Split</Label>
               <div className="space-y-4">
                 {Object.entries(sessionStats.ageCounts).map(([age, count]) => (
