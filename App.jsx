@@ -23,15 +23,17 @@ const STORAGE_KEY = 'petal_archive_v18';
 const EVENT_HISTORY_KEY = 'petal_archive_event_history_v1';
 const ORGANISER_HISTORY_KEY = 'petal_archive_organiser_history_v1';
 const PENDING_QUEUE_KEY = 'petal_archive_pending_queue_v1';
+const LAST_SALE_KEY = 'petal_archive_last_sale_v1';
+const QUICK_PRICES = ['89', '95', '105', '115', '129', '149', '169', '179', '239'];
 
 const EMPTY_ITEM = {
   category: '',
-  chain: '',
-  style: '',
+  chain: 'None',
+  style: 'None',
   shape: '',
-  series: '',
+  series: 'None',
   metal: '',
-  base: '',
+  base: 'None',
   colourLetter: '',
   price: '',
   otherChain: '',
@@ -245,6 +247,7 @@ const flattenTransactions = transactions => {
       rows.push({
         transactionId: transaction.transaction_code,
         timestamp: transaction.created_at,
+        status: transaction.status || 'active',
         event: transaction.event_name,
         organiser: transaction.organiser,
         location: transaction.location,
@@ -281,6 +284,8 @@ export default function PetalArchiveOS() {
   const [organiserHistory, setOrganiserHistory] = useState([]);
   const [pendingQueue, setPendingQueue] = useState([]);
   const [syncMessage, setSyncMessage] = useState('');
+  const [lastSale, setLastSale] = useState(null);
+  const [recentSales, setRecentSales] = useState([]);
 
   const [session, setSession] = useState({
     eventName: '',
@@ -305,6 +310,7 @@ export default function PetalArchiveOS() {
     setEventHistory(readJson(EVENT_HISTORY_KEY, []));
     setOrganiserHistory(readJson(ORGANISER_HISTORY_KEY, []));
     setPendingQueue(readJson(PENDING_QUEUE_KEY, []));
+    setLastSale(readJson(LAST_SALE_KEY, null));
   }, []);
 
   const savePendingQueue = nextQueue => {
@@ -353,6 +359,7 @@ export default function PetalArchiveOS() {
       const { data, error } = await supabase
         .from('transactions')
         .select('*, transaction_items(*)')
+        .or('status.eq.active,status.is.null')
         .order('created_at', { ascending: false })
         .limit(5000);
 
@@ -370,6 +377,56 @@ export default function PetalArchiveOS() {
     if (view !== 'dashboard' && view !== 'history') return;
     fetchLiveData();
   }, [view]);
+
+  const fetchRecentSales = async () => {
+    try {
+      const response = await fetch('/api/recent-sales?limit=10');
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Could not load recent sales.');
+      setRecentSales(result.sales || []);
+    } catch (err) {
+      console.error('Recent sales error:', err);
+      setSyncMessage('Could not load recent sales.');
+    }
+  };
+
+  useEffect(() => {
+    if (view === 'settings') fetchRecentSales();
+  }, [view]);
+
+  const voidSale = async (transactionCode, reason = 'Voided from app') => {
+    if (!transactionCode || isLoading) return;
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/void-transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionCode, reason })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Could not void sale.');
+
+      if (lastSale?.transaction_code === transactionCode) {
+        setLastSale(null);
+        localStorage.removeItem(LAST_SALE_KEY);
+      }
+
+      setSyncMessage(`Sale ${transactionCode} voided.`);
+      await Promise.all([fetchLiveData(), fetchRecentSales()]);
+    } catch (err) {
+      console.error('Void sale error:', err);
+      alert(err.message || 'Could not void sale.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const undoLastSale = () => {
+    if (!lastSale?.transaction_code) return;
+    voidSale(lastSale.transaction_code, 'Undo last sale from app');
+    setShowSuccess(false);
+  };
 
   const getRowValue = (row, keys, fallback = '') => {
     for (const key of keys) {
@@ -608,6 +665,9 @@ export default function PetalArchiveOS() {
 
     try {
       await insertTransactionPayload(payload);
+      const savedSale = { transaction_code: transactionCode, total_amount: payload.transaction.total_amount, item_count: payload.transaction.item_count, created_at: new Date().toISOString() };
+      setLastSale(savedSale);
+      writeJson(LAST_SALE_KEY, savedSale);
       setBasket([]);
       setStep(1);
       setShowSuccess(true);
@@ -617,6 +677,8 @@ export default function PetalArchiveOS() {
     } catch (err) {
       console.error('Supabase sync error:', err);
       queuePendingTransaction(payload);
+      setLastSale(null);
+      localStorage.removeItem(LAST_SALE_KEY);
       setBasket([]);
       setStep(1);
       setShowSuccess(true);
@@ -632,6 +694,7 @@ export default function PetalArchiveOS() {
       localStorage.removeItem(EVENT_HISTORY_KEY);
       localStorage.removeItem(ORGANISER_HISTORY_KEY);
       localStorage.removeItem(PENDING_QUEUE_KEY);
+      localStorage.removeItem(LAST_SALE_KEY);
       window.location.reload();
     }
   };
@@ -676,6 +739,11 @@ export default function PetalArchiveOS() {
               </div>
               <h2 className="text-2xl font-serif italic text-[#1B3022]">Sale Archived</h2>
               <p className="text-[10px] font-black uppercase tracking-widest text-[#B5935E] mt-2">{pendingQueue.length ? 'Queued for sync' : 'Saved to database'}</p>
+              {lastSale?.transaction_code && !pendingQueue.length && (
+                <button type="button" onClick={undoLastSale} className="mt-6 w-full bg-red-50 text-red-500 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest">
+                  Undo Last Sale
+                </button>
+              )}
             </motion.div>
           </motion.div>
         )}
@@ -761,8 +829,8 @@ export default function PetalArchiveOS() {
                 <section><Label>5. Series</Label><div className="grid grid-cols-3 gap-2">{SERIES_OPTIONS.map(s => <GridBtn key={s} label={s} active={currentItem.series === s} onClick={() => setCurrentItem(prev => ({ ...prev, series: s, otherSeries: s === 'Others' ? prev.otherSeries : '' }))} />)}</div>{currentItem.series === 'Others' && <OtherInput value={currentItem.otherSeries} onChange={value => setCurrentItem(prev => ({ ...prev, otherSeries: value }))} />}</section>
                 <section><Label>6. Metal</Label><div className="grid grid-cols-4 gap-2">{METAL_OPTIONS.map(m => <GridBtn key={m} label={m} active={currentItem.metal === m} onClick={() => setCurrentItem(prev => ({ ...prev, metal: m }))} />)}</div></section>
                 <section><Label>7. Base</Label><div className="grid grid-cols-3 gap-2">{BASE_OPTIONS.map(b => <GridBtn key={b} label={b} active={currentItem.base === b} onClick={() => setCurrentItem(prev => ({ ...prev, base: b, otherBase: b === 'Others' ? prev.otherBase : '' }))} />)}</div>{currentItem.base === 'Others' && <OtherInput value={currentItem.otherBase} onChange={value => setCurrentItem(prev => ({ ...prev, otherBase: value }))} />}</section>
-                <section><Label>8. Embedded Flower / Letter</Label><div className="grid grid-cols-3 gap-2">{COLOUR_OPTIONS.map(col => <GridBtn key={col} label={col} active={currentItem.colourLetter === col} onClick={() => setCurrentItem(prev => ({ ...prev, colourLetter: col, otherColour: col === 'Others' ? prev.otherColour : '' }))} />)}</div>{currentItem.colourLetter === 'Others' && <OtherInput value={currentItem.otherColour} onChange={value => setCurrentItem(prev => ({ ...prev, otherColour: value }))} />}</section>
-                <section><Label>Price (RM)</Label><input type="number" className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-2xl font-serif text-[#1B3022] shadow-sm outline-none" value={currentItem.price} onChange={e => setCurrentItem(prev => ({ ...prev, price: e.target.value }))} /></section>
+                <section><Label>8. Embedded Flower / Letter</Label><div className="grid grid-cols-3 gap-2">{COLOUR_OPTIONS.map(col => <GridBtn key={col} label={col} active={currentItem.colourLetter === col} onClick={() => setCurrentItem(prev => ({ ...prev, colourLetter: col, otherColour: col === 'Others' ? prev.otherColour : '' }))} />}</div>{currentItem.colourLetter === 'Others' && <OtherInput value={currentItem.otherColour} onChange={value => setCurrentItem(prev => ({ ...prev, otherColour: value }))} />}</section>
+                <section><Label>Price (RM)</Label><input type="number" className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-2xl font-serif text-[#1B3022] shadow-sm outline-none" value={currentItem.price} onChange={e => setCurrentItem(prev => ({ ...prev, price: e.target.value }))} /><div className="grid grid-cols-3 gap-2 mt-3">{QUICK_PRICES.map(price => <button key={price} type="button" onClick={() => setCurrentItem(prev => ({ ...prev, price }))} className={`py-3 rounded-xl text-[10px] font-black border ${currentItem.price === price ? 'bg-[#1B3022] text-white border-[#1B3022]' : 'bg-white text-[#1B3022] border-gray-100'}`}>RM {price}</button>)}</div></section>
                 <div className="flex gap-4"><button type="button" onClick={() => setStep(1)} className="flex-1 py-4 text-gray-400 font-bold uppercase text-[10px]">Back</button><button type="button" onClick={addToBasket} className="flex-[2] bg-[#B5935E] text-[#1B3022] py-4 rounded-2xl font-black shadow-xl">ADD TO BASKET</button></div>
               </div>
             )}
@@ -825,6 +893,26 @@ export default function PetalArchiveOS() {
             <header className="text-center py-6"><h2 className="text-3xl font-serif italic text-[#1B3022]">Command Center</h2></header>
             <section className="bg-[#1B3022] p-8 rounded-[2.5rem] text-white shadow-xl"><div className="flex items-center gap-2 mb-4 text-[#B5935E] font-black text-[10px] uppercase tracking-widest"><Clock size={16} /> Status</div><div className="space-y-3 text-[10px] font-black uppercase tracking-[0.1em]"><div className="flex justify-between border-b border-white/5 pb-2"><span>Database</span><span className="text-[#B5935E]">{hasSupabaseConfig ? 'Supabase' : 'Not configured'}</span></div><div className="flex justify-between"><span>Pending Queue</span><span className="text-[#B5935E]">{pendingQueue.length}</span></div></div></section>
             <section className="bg-white p-2 rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden"><div className="p-6 flex items-center gap-2"><BookOpen size={18} className="text-[#B5935E]" /><Label>Price Directory</Label></div><div className="space-y-1">{PRICE_DIRECTORY.map((group, i) => <div key={group.c} className="px-2"><button type="button" onClick={() => setOpenPriceCat(prev => (prev === i ? null : i))} className="w-full p-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-[#1B3022] bg-[#FDFBF7] rounded-xl mb-1">{group.c}{openPriceCat === i ? <ChevronUp size={12} /> : <ChevronDown size={12} />}</button>{openPriceCat === i && <div className="p-4 space-y-3 bg-white border border-gray-100 rounded-xl mb-2">{group.i.map(it => <div key={it.n} className="flex justify-between text-[10px] border-b border-gray-50 pb-2 italic"><span className="text-gray-400 font-bold uppercase not-italic tracking-tighter">{it.n}</span><span>RM {it.p}</span></div>)}</div>}</div>)}</div></section>
+            <section className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <Label>Recent Sales</Label>
+                <button type="button" onClick={fetchRecentSales} className="text-[9px] font-black uppercase text-[#B5935E]">Refresh</button>
+              </div>
+              <div className="space-y-3">
+                {recentSales.length ? recentSales.map(sale => (
+                  <div key={sale.transaction_code} className="flex items-center justify-between gap-3 border-b border-gray-50 pb-3 last:border-0">
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-[#1B3022]">{sale.transaction_code}</p>
+                      <p className="text-[9px] font-bold uppercase text-gray-400">{sale.item_count} item(s) · {new Date(sale.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-serif italic text-[#B5935E]">RM {money(sale.total_amount)}</p>
+                      <button type="button" disabled={isLoading} onClick={() => window.confirm(`Void ${sale.transaction_code}?`) && voidSale(sale.transaction_code, 'Voided from recent sales')} className="mt-1 text-[8px] font-black uppercase text-red-400 disabled:opacity-40">Void</button>
+                    </div>
+                  </div>
+                )) : <p className="text-[10px] font-bold text-gray-300 uppercase">No recent sales yet</p>}
+              </div>
+            </section>
             <button type="button" onClick={syncPendingQueue} className="flex items-center justify-center gap-2 w-full p-6 bg-[#E8EEE9] rounded-[2.5rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-sm text-[#1B3022] border border-[#1B3022]/5"><Database size={16} /> Sync Pending Queue</button>
             <div className="grid grid-cols-2 gap-4"><button type="button" onClick={clearCache} className="bg-white text-gray-400 py-6 rounded-[2rem] font-black text-[9px] uppercase border border-gray-100 flex flex-col items-center gap-2 shadow-sm"><RefreshCcw size={14} /> Clear App Cache</button><button type="button" onClick={endSession} className="bg-red-50 text-red-400 py-6 rounded-[2rem] font-black text-[9px] uppercase border border-red-100 flex flex-col items-center gap-2 shadow-sm"><Trash2 size={14} /> End Session</button></div>
           </motion.div>
