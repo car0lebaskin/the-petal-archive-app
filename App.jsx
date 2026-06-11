@@ -18,6 +18,7 @@ import {
   Database
 } from 'lucide-react';
 import { hasSupabaseConfig, supabase } from './lib/supabase.js';
+import RecentSalesPanel from './RecentSalesPanel.jsx';
 
 const STORAGE_KEY = 'petal_archive_v18';
 const EVENT_HISTORY_KEY = 'petal_archive_event_history_v1';
@@ -824,6 +825,7 @@ export default function PetalArchiveOS() {
           <motion.div key="settings" className="space-y-6">
             <header className="text-center py-6"><h2 className="text-3xl font-serif italic text-[#1B3022]">Command Center</h2></header>
             <section className="bg-[#1B3022] p-8 rounded-[2.5rem] text-white shadow-xl"><div className="flex items-center gap-2 mb-4 text-[#B5935E] font-black text-[10px] uppercase tracking-widest"><Clock size={16} /> Status</div><div className="space-y-3 text-[10px] font-black uppercase tracking-[0.1em]"><div className="flex justify-between border-b border-white/5 pb-2"><span>Database</span><span className="text-[#B5935E]">{hasSupabaseConfig ? 'Supabase' : 'Not configured'}</span></div><div className="flex justify-between"><span>Pending Queue</span><span className="text-[#B5935E]">{pendingQueue.length}</span></div></div></section>
+            <RecentSalesPanel onChanged={fetchLiveData} />
             <section className="bg-white p-2 rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden"><div className="p-6 flex items-center gap-2"><BookOpen size={18} className="text-[#B5935E]" /><Label>Price Directory</Label></div><div className="space-y-1">{PRICE_DIRECTORY.map((group, i) => <div key={group.c} className="px-2"><button type="button" onClick={() => setOpenPriceCat(prev => (prev === i ? null : i))} className="w-full p-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-[#1B3022] bg-[#FDFBF7] rounded-xl mb-1">{group.c}{openPriceCat === i ? <ChevronUp size={12} /> : <ChevronDown size={12} />}</button>{openPriceCat === i && <div className="p-4 space-y-3 bg-white border border-gray-100 rounded-xl mb-2">{group.i.map(it => <div key={it.n} className="flex justify-between text-[10px] border-b border-gray-50 pb-2 italic"><span className="text-gray-400 font-bold uppercase not-italic tracking-tighter">{it.n}</span><span>RM {it.p}</span></div>)}</div>}</div>)}</div></section>
             <button type="button" onClick={syncPendingQueue} className="flex items-center justify-center gap-2 w-full p-6 bg-[#E8EEE9] rounded-[2.5rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-sm text-[#1B3022] border border-[#1B3022]/5"><Database size={16} /> Sync Pending Queue</button>
             <div className="grid grid-cols-2 gap-4"><button type="button" onClick={clearCache} className="bg-white text-gray-400 py-6 rounded-[2rem] font-black text-[9px] uppercase border border-gray-100 flex flex-col items-center gap-2 shadow-sm"><RefreshCcw size={14} /> Clear App Cache</button><button type="button" onClick={endSession} className="bg-red-50 text-red-400 py-6 rounded-[2rem] font-black text-[9px] uppercase border border-red-100 flex flex-col items-center gap-2 shadow-sm"><Trash2 size={14} /> End Session</button></div>
