@@ -26,12 +26,12 @@ const PENDING_QUEUE_KEY = 'petal_archive_pending_queue_v1';
 
 const EMPTY_ITEM = {
   category: '',
-  chain: '',
-  style: '',
+  chain: 'None',
+  style: 'None',
   shape: '',
-  series: '',
+  series: 'None',
   metal: '',
-  base: '',
+  base: 'None',
   colourLetter: '',
   price: '',
   otherChain: '',
@@ -41,6 +41,8 @@ const EMPTY_ITEM = {
   otherBase: '',
   otherColour: ''
 };
+
+const QUICK_PRICES = ['89', '95', '105', '115', '129', '149', '169', '179', '239'];
 
 const LOCATION_OPTIONS = ['163 Mall', 'Waterfront', 'Intermark', 'BSC', 'The Campus', 'Publika', 'Others'];
 const MAIN_ITEMS = ['Necklace', 'Bracelet', 'Ring', 'Earring', 'Bangle', 'Charm', 'Pendant', 'Chain'];
@@ -353,6 +355,7 @@ export default function PetalArchiveOS() {
       const { data, error } = await supabase
         .from('transactions')
         .select('*, transaction_items(*)')
+        .or('status.eq.active,status.is.null')
         .order('created_at', { ascending: false })
         .limit(5000);
 
@@ -665,6 +668,35 @@ export default function PetalArchiveOS() {
     );
   };
 
+  const undoLastSale = async () => {
+    if (!hasSupabaseConfig || !supabase || !liveData.length) {
+      setShowSuccess(false);
+      setSyncMessage('Undo needs the latest Supabase sale loaded first.');
+      return;
+    }
+
+    const lastTransactionId = liveData[0]?.transactionId;
+    if (!lastTransactionId) return;
+
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/void-transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionCode: lastTransactionId, reason: 'Undo last sale from app' })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Could not undo last sale.');
+      setShowSuccess(false);
+      setSyncMessage('Last sale voided.');
+      fetchLiveData();
+    } catch (err) {
+      alert(err.message || 'Could not undo last sale.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1B3022] font-sans p-4 max-w-md mx-auto pb-32 overflow-x-hidden">
       <AnimatePresence>
@@ -676,6 +708,7 @@ export default function PetalArchiveOS() {
               </div>
               <h2 className="text-2xl font-serif italic text-[#1B3022]">Sale Archived</h2>
               <p className="text-[10px] font-black uppercase tracking-widest text-[#B5935E] mt-2">{pendingQueue.length ? 'Queued for sync' : 'Saved to database'}</p>
+              {!pendingQueue.length && <button type="button" onClick={undoLastSale} className="mt-6 bg-red-50 text-red-400 px-5 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest">Undo Last Sale</button>}
             </motion.div>
           </motion.div>
         )}
@@ -762,7 +795,7 @@ export default function PetalArchiveOS() {
                 <section><Label>6. Metal</Label><div className="grid grid-cols-4 gap-2">{METAL_OPTIONS.map(m => <GridBtn key={m} label={m} active={currentItem.metal === m} onClick={() => setCurrentItem(prev => ({ ...prev, metal: m }))} />)}</div></section>
                 <section><Label>7. Base</Label><div className="grid grid-cols-3 gap-2">{BASE_OPTIONS.map(b => <GridBtn key={b} label={b} active={currentItem.base === b} onClick={() => setCurrentItem(prev => ({ ...prev, base: b, otherBase: b === 'Others' ? prev.otherBase : '' }))} />)}</div>{currentItem.base === 'Others' && <OtherInput value={currentItem.otherBase} onChange={value => setCurrentItem(prev => ({ ...prev, otherBase: value }))} />}</section>
                 <section><Label>8. Embedded Flower / Letter</Label><div className="grid grid-cols-3 gap-2">{COLOUR_OPTIONS.map(col => <GridBtn key={col} label={col} active={currentItem.colourLetter === col} onClick={() => setCurrentItem(prev => ({ ...prev, colourLetter: col, otherColour: col === 'Others' ? prev.otherColour : '' }))} />)}</div>{currentItem.colourLetter === 'Others' && <OtherInput value={currentItem.otherColour} onChange={value => setCurrentItem(prev => ({ ...prev, otherColour: value }))} />}</section>
-                <section><Label>Price (RM)</Label><input type="number" className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-2xl font-serif text-[#1B3022] shadow-sm outline-none" value={currentItem.price} onChange={e => setCurrentItem(prev => ({ ...prev, price: e.target.value }))} /></section>
+                <section><Label>Price (RM)</Label><input type="number" className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-2xl font-serif text-[#1B3022] shadow-sm outline-none" value={currentItem.price} onChange={e => setCurrentItem(prev => ({ ...prev, price: e.target.value }))} /><div className="grid grid-cols-3 gap-2 mt-3">{QUICK_PRICES.map(price => <button key={price} type="button" onClick={() => setCurrentItem(prev => ({ ...prev, price }))} className={`py-3 rounded-xl border text-[10px] font-black ${currentItem.price === price ? 'bg-[#1B3022] text-white border-[#1B3022]' : 'bg-white text-[#1B3022] border-gray-100'}`}>RM {price}</button>)}</div></section>
                 <div className="flex gap-4"><button type="button" onClick={() => setStep(1)} className="flex-1 py-4 text-gray-400 font-bold uppercase text-[10px]">Back</button><button type="button" onClick={addToBasket} className="flex-[2] bg-[#B5935E] text-[#1B3022] py-4 rounded-2xl font-black shadow-xl">ADD TO BASKET</button></div>
               </div>
             )}
